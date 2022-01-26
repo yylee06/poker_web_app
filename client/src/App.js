@@ -2,6 +2,7 @@ import logo from './logo.svg';
 import './App.css';
 import React from 'react';
 import IMAGES from './images/index.js';
+import poker_table from './images/poker_table.png'
 
 function App() {
   const [data, setData] = React.useState(null);
@@ -15,10 +16,13 @@ function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
+        <h4>ReactJS Show My Images Please</h4>
         <p>{!data ? "Loading..." : data}</p>
+        <img src={poker_table} className="poker-table" alt="" />
+        <p>Are my images above?</p>
       </header>
     </div>
+
   );
 }
 

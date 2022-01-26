@@ -25,10 +25,142 @@
       Learn how to configure a non-root public URL by running `npm run build`.
     -->
     <title>React App</title>
+
+    <style>
+      .login-button {
+        background-color: #555;
+        color: white;
+        padding: 16px 20px;
+        border: none;
+        cursor: pointer;
+        position: fixed;
+        top: 23px;
+        left: 28px;
+        width: 100px;
+      }
+
+      .login-popup {
+        display: none;
+        position: fixed;
+        top: 23px;
+        left: 28px;
+        border: 3px solid #f1f1f1;
+        z-index: 9;
+      }
+
+      .register-button {
+        background-color: #555;
+        color: white;
+        padding: 16px 20px;
+        border: none;
+        cursor: pointer;
+        position: fixed;
+        top: 80px;
+        left: 28px;
+        width: 100px;
+      }
+
+      .register-popup {
+        display: none;
+        position: fixed;
+        top: 80px;
+        left: 28px;
+        border: 3px solid #f1f1f1;
+        z-index: 10;
+      }
+
+      .form-container {
+        max-width: 300px;
+        padding: 10px;
+        background-color: white;
+      }
+
+      .form-container input[type=text], .form-container input[type=password] {
+        width: 90%;
+        padding: 15px;
+        margin: 5px 0 22px 0;
+        border: none;
+        background: #f1f1f1;
+      }
+
+      .form-container input[type=text]:focus, .login-form-container input[type=password]:focus {
+        background-color: #ddd;
+        outline: none;
+      }
+
+      .form-container .btn {
+        background-color: #04AA6D;
+        color: white;
+        padding: 16px 20px;
+        border: none;
+        cursor: pointer;
+        width: 100%;
+        margin-bottom: 10px;
+        opacity: 0.8;
+      }
+
+      .login-form-container .cancel {
+        background-color: red;
+      }
+
+      .login-form-container .btn:hover, .open-button:hover {
+        opacity: 1;
+      }
+    </style>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
+
+    <button class="login-button" onclick="openLogin()">Login</button>
+    <div class="login-popup" id="myLogin">
+      <form action="/action_page.php" class="form-container">
+        <h1>Login</h1>
+        <label for="username"><b>Username</b></label>
+        <input type="text" placeholder="Enter Username" name="username" required>
+
+        <label for="password"><b>Password</b></label>
+        <input type="password" placeholder="Enter Password" name="password" required>
+
+        <button type="submit" class="btn">Login</button>
+        <button type="button" class="btn cancel" onclick="closeLogin()">Close</button>
+      </form>
+
+    </div>
+
+    <button class="register-button" onclick="openRegister()">Register</button>
+    <div class="register-popup" id="myRegister">
+      <form action="/action_page.php" class="form-container">
+        <h1>Register</h1>
+        <label for="username"><b>Desired Username</b></label>
+        <input type="text" placeholder="Desired Username" name="username" required>
+
+        <label for="password"><b>Desired Password</b></label>
+        <input type="password" placeholder="Desired Password" name="password" required>
+
+        <button type="submit" class="btn">Register</button>
+        <button type="button" class="btn cancel" onclick="closeRegister()">Close</button>
+      </form>
+
+    </div>
+
+    <script>
+      function openLogin() {
+        document.getElementById("myLogin").style.display = "block";
+      }
+
+      function openRegister() {
+        document.getElementById("myRegister").style.display = "block";
+      }
+      
+      function closeLogin() {
+        document.getElementById("myLogin").style.display = "none";
+      }
+
+      function closeRegister() {
+        document.getElementById("myRegister").style.display = "none";
+      }
+    </script>
     <!--
       This HTML file is a template.
       If you open it directly in the browser, you will see an empty page.
