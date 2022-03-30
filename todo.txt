@@ -1,0 +1,5 @@
+1. fix npm run dev command to install dependencies on client (DONE)
+2. learn how to sqlite with node 
+3. integrate sqlite databases for login details with server
+4. create first user in database
+5. implement hashing, maybe username + password hashed?
