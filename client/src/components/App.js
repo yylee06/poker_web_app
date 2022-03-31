@@ -1,8 +1,6 @@
-import logo from './logo.svg';
 import './App.css';
 import React from 'react';
-import IMAGES from './images/index.js';
-import poker_table from './images/poker_table.png'
+import poker_table from '../images/poker_table.png'
 
 function App() {
   const [data, setData] = React.useState(null);

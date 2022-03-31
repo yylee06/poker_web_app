@@ -1,5 +1,13 @@
+Short Term: 
 1. fix npm run dev command to install dependencies on client (DONE)
-2. learn how to sqlite with node 
-3. integrate sqlite databases for login details with server
-4. create first user in database
-5. implement hashing, maybe username + password hashed?
+2. Implement register form using React, not HTML (DONE)
+3. Implement login form using React, not HTML (DONE)
+4. Make register user form add to database
+5. Change page state based on whether or not user is logged in
+6. integrate sqlite databases for login details with server
+7. create first user in database
+8. implement hashing, maybe username + password hashed?
+
+Long Term:
+1. Figure out basics of how React works with the HTML and the React DOM
+2. Learn how to sqlite with node 
