@@ -1,11 +1,26 @@
-const path = require('path')
+const path = require('path');
 const express = require("express");
-const Promise = require('bluebird')
-const AppDAO = require('./dao')
+const Promise = require('bluebird');
+const AppDAO = require('./dao');
+const cors = require('cors');
 const UserRepository = require('./user_repository');
 const { resolve } = require('path');
 const PORT = 3080;
+const bodyParser = require('body-parser');
 const app = express();
+
+//sets up cors to accept requests from http://localhost:3000 only
+var corsOptions = {
+    origin: 'http://localhost:3000',
+    optionsSuccessStatus: 200
+}
+
+//body-parser middleware to read POST requests
+app.use(cors(corsOptions));
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
+app.use(bodyParser.text());
+
 
 //----connects to database----//
 const dao = new AppDAO('./users.sqlite3')
@@ -30,7 +45,7 @@ function initTable() {
             ]
             return Promise.all(users.map((user) => {
                 const { username, password } = user
-                return userRepo.create(username, password)
+                return userRepo.createUser(username, password)
             }))
         })
         .then(() => userRepo.getById(2))
@@ -65,21 +80,57 @@ async function checkTable() {
 }
 //------------------------------------------------------------------//
 
+//-----deletes the users table (ONLY FOR TESTING)-----//
 function deleteUsersTable() {
     userRepo.dropUsersTable()
 }
+//----------------------------------------------------//
 
+//-----deletes all users from the database (ONLY FOR TESTING)-----//
+function deleteAllUsers() {
+    userRepo.deleteAllUsers()
+    userRepo.resetSequencing()
+}
+//----------------------------------------------------------------//
 
-//deleteUsersTable()
+function addNewUser(username, password) {
+    userRepo.createUser(username, password);
+}
+
+function getAllUsers() {
+    userRepo.getAll()
+        .then((users) => {
+            return new Promise((resolve, reject) => {
+                users.forEach((user) => {
+                    console.log(`user ${user.id}: ${user.username}`)
+                })
+            })
+            resolve('success')
+        })
+        .catch((err) => {
+            console.log('Error: ')
+            console.log(JSON.stringify(err))
+        })
+}
+
+//deleteAllUsers()
 checkTable()
-
-app.use(express.static(path.resolve(__dirname, '../client/public')));
-app.use(express.static('public'));
 
 app.get("/", )
 
 app.get("/api", (req, res) => {
     res.json({message: "Hello from server!"});
+});
+
+app.post("/users", cors(), (req, res) => {
+    const user = {username: req.body.username, password: req.body.password}
+    addNewUser(user.username, user.password)
+    res.status(201).json({message: `User ${user.username} has been created.`})
+});
+
+app.get("/users", (req, res) => {
+    res.json({message: "Hey there!"})
+    getAllUsers();
 });
 
 app.get('*', (req, res) => {
@@ -89,3 +140,6 @@ app.get('*', (req, res) => {
 app.listen(PORT, () => {
     console.log(`Server listening on ${PORT}`);
 });
+
+app.use(express.static(path.resolve(__dirname, '../client/public')));
+app.use(express.static('public'));

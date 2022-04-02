@@ -2,10 +2,10 @@ Short Term:
 1. fix npm run dev command to install dependencies on client (DONE)
 2. Implement register form using React, not HTML (DONE)
 3. Implement login form using React, not HTML (DONE)
-4. Make register user form add to database
-5. Change page state based on whether or not user is logged in
-6. integrate sqlite databases for login details with server
-7. create first user in database
+4. Make register user form add to database (DONE)
+5. Create first user in database (DONE)
+6. Figure out how login authentication works
+7. Change page state based on whether or not user is logged in
 8. implement hashing, maybe username + password hashed?
 
 Long Term:
