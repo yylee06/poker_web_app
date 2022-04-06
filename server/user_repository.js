@@ -72,6 +72,11 @@ class UserRepository {
             id = ?`, [id])
     }
 
+    //returns 1 if user exists, 0 if not
+    usernameExists(username) {
+        return this.dao.get(`SELECT COUNT(*) FROM users WHERE username=?`, [username])
+    }
+
     //retrieves one user by username
     getByUsername(username) {
         return this.dao.get(`SELECT * FROM users WHERE

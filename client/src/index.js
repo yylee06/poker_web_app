@@ -2,9 +2,6 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
 import Components from './components/Components'
-import App from './components/App';
-import Login from './components/Login';
-//import Register from './components/Register';
 import reportWebVitals from './reportWebVitals';
 
 ReactDOM.render(

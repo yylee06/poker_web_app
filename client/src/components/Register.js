@@ -12,9 +12,8 @@ function Register() {
     let user = getValues();
     const user_body = JSON.stringify({username: user.username, password: user.password});
     const user_headers = {'Accept': 'application/json', 'Content-Type': 'application/json'};
-    console.log(user_body)
 
-    fetch('http://localhost:3080/users', {method: 'POST', body: user_body, headers: user_headers})
+    fetch('http://localhost:3080/register', {method: 'POST', body: user_body, headers: user_headers})
         .then(res => res.json())
         .then(data => console.log(data))
     

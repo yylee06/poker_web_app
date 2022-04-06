@@ -28,6 +28,55 @@ const blogUserData = { username: 'ylee', password: 'dogwater' }
 const userRepo = new UserRepository(dao)
 //----------------------------//
 
+//----direct database calls, use async function to call these----//
+//checks if the users table exists
+function checkUsersTableExists() {
+    return userRepo.tableExists('users')
+}
+
+//checks if a user with username exists
+function checkUserExists(username) {
+    return userRepo.usernameExists(username)
+}
+
+//adds new user to database
+function addNewUser(username, password) {
+    userRepo.createUser(username, password);
+}
+
+//returns user with given username
+function getUserByUsername(username) {
+    return userRepo.getByUsername(username)
+}
+
+//deletes the users table (ONLY FOR TESTING)
+function deleteUsersTable() {
+    userRepo.dropUsersTable()
+}
+
+//deletes all users from the database (ONLY FOR TESTING)
+function deleteAllUsers() {
+    userRepo.deleteAllUsers()
+    userRepo.resetSequencing()
+}
+
+//gets all users
+function getAllUsers() {
+    userRepo.getAll()
+        .then((users) => {
+            return new Promise((resolve, reject) => {
+                users.forEach((user) => {
+                    console.log(`user ${user.id}: ${user.username}`)
+                })
+            })
+            resolve('success')
+        })
+        .catch((err) => {
+            console.log('Error: ')
+            console.log(JSON.stringify(err))
+        })
+}
+//---------------------------------------------------------------//
 
 //----function to initialize new users table----//
 function initTable() {
@@ -68,11 +117,8 @@ function initTable() {
 //----------------------------------------------//
 
 //----checks if users table exists, else creates new users table----//
-function checkUsersExists() {
-    return userRepo.tableExists('users')
-}
 async function checkTable() {
-    tableStatus = await checkUsersExists()
+    const tableStatus = await checkUsersTableExists()
     if (tableStatus['COUNT(*)'] == 0) {
         initTable()
         console.log('Users table does not exist, creating new table.')
@@ -80,38 +126,16 @@ async function checkTable() {
 }
 //------------------------------------------------------------------//
 
-//-----deletes the users table (ONLY FOR TESTING)-----//
-function deleteUsersTable() {
-    userRepo.dropUsersTable()
-}
-//----------------------------------------------------//
-
-//-----deletes all users from the database (ONLY FOR TESTING)-----//
-function deleteAllUsers() {
-    userRepo.deleteAllUsers()
-    userRepo.resetSequencing()
-}
-//----------------------------------------------------------------//
-
-function addNewUser(username, password) {
-    userRepo.createUser(username, password);
-}
-
-function getAllUsers() {
-    userRepo.getAll()
-        .then((users) => {
-            return new Promise((resolve, reject) => {
-                users.forEach((user) => {
-                    console.log(`user ${user.id}: ${user.username}`)
-                })
-            })
-            resolve('success')
-        })
-        .catch((err) => {
-            console.log('Error: ')
-            console.log(JSON.stringify(err))
-        })
-}
+//----checks if user exists----//
+async function checkIfUserExists(username) {
+    const userStatus = await checkUserExists(username)
+    if (userStatus['COUNT(*)'] > 0) {
+        return true
+    }
+    else{
+        return false
+    }
+}//----------------------------//
 
 //deleteAllUsers()
 checkTable()
@@ -122,10 +146,27 @@ app.get("/api", (req, res) => {
     res.json({message: "Hello from server!"});
 });
 
-app.post("/users", cors(), (req, res) => {
+app.post("/login", cors(), (req, res) => {
+    const user = {username: req.body.username, password: req.body.password}
+    userRepo.getByUsername(user.username)
+        .then((retrievedUser) => {
+            if (retrievedUser.password === user.password) {
+                res.status(201).json({message: `User "${user.username}" has logged in.`, auth: 1, token: "test123"})
+            }
+            else {
+                res.status(200).json({message: `Password is incorrect.`, auth: 0})
+            }
+            resolve('success')
+        })
+        .catch((err) => {
+            res.status(200).json({message: `User "${user.username}" is not in the database.`, auth: 0})
+        })
+});
+
+app.post("/register", cors(), (req, res) => {
     const user = {username: req.body.username, password: req.body.password}
     addNewUser(user.username, user.password)
-    res.status(201).json({message: `User ${user.username} has been created.`})
+    res.status(201).json({message: `User "${user.username}" has been created.`})
 });
 
 app.get("/users", (req, res) => {
