@@ -8,15 +8,19 @@ class UserRepository {
         const sql = `
         CREATE TABLE IF NOT EXISTS users (id INTEGER 
             PRIMARY KEY AUTOINCREMENT, 
-            username TEXT, password TEXT)`
+            username TEXT NOT NULL, 
+            password TEXT NOT NULL, 
+            login_token TEXT NOT NULL,
+            chips_bank INTEGER DEFAULT 10000 NOT NULL,
+            chips_useable INTEGER DEFAULT 0 NOT NULL)`
         return this.dao.run(sql)
     }
 
     //creates one user
-    createUser(username, password) {
+    createUser(username, password, login_token) {
         return this.dao.run(`INSERT INTO users (username,
-            password) VALUES (?, ?)`, [username,
-            password])
+            password, login_token) VALUES (?, ?, ?)`, [username,
+            password, login_token])
     }
 
     turnForeignKeysOff() {
@@ -68,8 +72,7 @@ class UserRepository {
 
     //retrieves one user by id
     getById(id) {
-        return this.dao.get(`SELECT * FROM users WHERE
-            id = ?`, [id])
+        return this.dao.get(`SELECT * FROM users WHERE id = ?`, [id])
     }
 
     //returns 1 if user exists, 0 if not
@@ -79,8 +82,12 @@ class UserRepository {
 
     //retrieves one user by username
     getByUsername(username) {
-        return this.dao.get(`SELECT * FROM users WHERE
-            username=?`, [username])
+        return this.dao.get(`SELECT * FROM users WHERE username=?`, [username])
+    }
+
+    //retrieves one user by login_token
+    getByToken(login_token) {
+        return this.dao.get(`SELECT * FROM users WHERE login_token=?`, [login_token])
     }
 
     //retrieves all users
@@ -88,6 +95,17 @@ class UserRepository {
         return this.dao.all(`SELECT * FROM users`)
     }
 
+    //updates the amount of chips in the chips bank
+    updateChipsBank(new_amount, username) {
+        return this.dao.run(`UPDATE users SET chips_bank = ? 
+            WHERE username=?`, [new_amount, username])
+    }
+
+    //updates the amount of chips in the usable chips
+    updateChipsUseable(new_amount, username) {
+        return this.dao.run(`UPDATE users SET chips_useable = ? 
+            WHERE username=?`, [new_amount, username])
+    }
 }
 
 module.exports = UserRepository

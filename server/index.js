@@ -2,6 +2,7 @@ const path = require('path');
 const express = require("express");
 const Promise = require('bluebird');
 const AppDAO = require('./dao');
+const crypto = require("crypto")
 const cors = require('cors');
 const UserRepository = require('./user_repository');
 const { resolve } = require('path');
@@ -23,7 +24,7 @@ app.use(bodyParser.text());
 
 
 //----connects to database----//
-const dao = new AppDAO('./users.sqlite3')
+const dao = new AppDAO('./server/users.sqlite3')
 const blogUserData = { username: 'ylee', password: 'dogwater' }
 const userRepo = new UserRepository(dao)
 //----------------------------//
@@ -39,9 +40,10 @@ function checkUserExists(username) {
     return userRepo.usernameExists(username)
 }
 
-//adds new user to database
+//calls the createUser sql query function, but also returns a hash for the login token
 function addNewUser(username, password) {
-    userRepo.createUser(username, password);
+    const login_token = crypto.createHash('sha256').update(username).digest('hex')
+    return userRepo.createUser(username, password, login_token)
 }
 
 //returns user with given username
@@ -94,19 +96,8 @@ function initTable() {
             ]
             return Promise.all(users.map((user) => {
                 const { username, password } = user
-                return userRepo.createUser(username, password)
+                return addNewUser(username, password)
             }))
-        })
-        .then(() => userRepo.getById(2))
-        .then((user) => {
-            console.log(`\nRetrieved user from database`)
-            console.log(`user ID = ${user.id}`)
-            console.log(`username = ${user.username}`)
-            return userRepo.getById(user.id)
-        })
-        .then((user) => {
-            console.log(`\nRetrieved user from user haha`)
-            console.log(`user password = ${user.password}`)
             resolve('success')
         })
         .catch((err) => {
@@ -137,6 +128,7 @@ async function checkIfUserExists(username) {
     }
 }//----------------------------//
 
+//deleteUsersTable()
 //deleteAllUsers()
 checkTable()
 
@@ -151,7 +143,7 @@ app.post("/login", cors(), (req, res) => {
     userRepo.getByUsername(user.username)
         .then((retrievedUser) => {
             if (retrievedUser.password === user.password) {
-                res.status(201).json({message: `User "${user.username}" has logged in.`, auth: 1, token: "test123"})
+                res.status(201).json({message: `User "${user.username}" has logged in.`, auth: 1, token: retrievedUser.login_token})
             }
             else {
                 res.status(200).json({message: `Password is incorrect.`, auth: 0})
@@ -165,9 +157,97 @@ app.post("/login", cors(), (req, res) => {
 
 app.post("/register", cors(), (req, res) => {
     const user = {username: req.body.username, password: req.body.password}
-    addNewUser(user.username, user.password)
-    res.status(201).json({message: `User "${user.username}" has been created.`})
+
+    userRepo.getByUsername(user.username)
+        .then((retrievedUser) => {
+            res.status(200).json({message: `User with username "${retrievedUser.username}" already exists.`, auth: 0})
+            resolve('success')
+        })
+        .catch((err) => {
+            res.status(201).json({message: `User "${user.username}" has been created.`, auth: 1})
+            addNewUser(user.username, user.password)
+        })
 });
+
+app.post("/show_chips_bank", cors(), (req, res) => {
+    const login_token = {token: req.body.token}
+
+    userRepo.getByToken(login_token.token)
+        .then((retrievedUser) => {
+            res.status(201).json({message: `Chips retrieved.`, amount: retrievedUser.chips_bank, auth: 1})
+            resolve('success')
+        })
+        .catch((err) => {
+            res.status(200).json({message: `Error: User does not exist.`, auth: 0})
+        })
+})
+
+app.post("/show_chips_useable", cors(), (req, res) => {
+    const login_token = {token: req.body.token}
+
+    userRepo.getByToken(login_token.token)
+        .then((retrievedUser) => {
+            res.status(201).json({message: `Chips retrieved.`, amount: retrievedUser.chips_useable, auth: 1})
+            resolve('success')
+        })
+        .catch((err) => {
+            res.status(200).json({message: `Error: User does not exist.`, auth: 0})
+        })
+})
+
+app.post("/withdraw", cors(), (req, res) => {
+    const user_request = {token: req.body.token, amount: req.body.amount}
+
+    userRepo.getByToken(user_request.token)
+        .then((retrievedUser) => {
+            if (user_request.amount <= retrievedUser.chips_bank) {
+                const new_bank = retrievedUser.chips_bank - user_request.amount
+                const new_useable = retrievedUser.chips_useable + user_request.amount
+                userRepo.updateChipsBank(new_bank, retrievedUser.username)
+                    .then(() => {
+                        userRepo.updateChipsUseable(new_useable, retrievedUser.username)
+                        res.status(201).json({message: `Chips withdrawn.`, auth: 1})
+                        resolve('success')
+                    })
+                    .catch((err) => {
+                        res.status(200).json({message: `Error: Chips bank could not be updated.`, auth: 1})
+                    })
+            }
+            else {
+                res.status(200).json({message: `Error: Insufficient chips for request.`, auth: 0})
+            }
+        })
+        .catch((err) => {
+            res.status(200).json({message: `Error: User does not exist.`, auth: 0})
+        })
+})
+
+app.post("/deposit", cors(), (req, res) => {
+    const user_request = {token: req.body.token, amount: req.body.amount}
+
+    userRepo.getByToken(user_request.token)
+        .then((retrievedUser) => {
+            if (user_request.amount <= retrievedUser.chips_useable) {
+                const new_bank = retrievedUser.chips_bank + user_request.amount
+                const new_useable = retrievedUser.chips_useable - user_request.amount
+                userRepo.updateChipsBank(new_bank, retrievedUser.username)
+                    .then(() => {
+                        userRepo.updateChipsUseable(new_useable, retrievedUser.username)
+                        res.status(201).json({message: `Chips deposited.`, auth: 1})
+                        resolve('success')
+                    })
+                    .catch((err) => {
+                        res.status(200).json({message: `Error: Chips bank could not be updated.`, auth: 1})
+                    })
+            }
+            else {
+                res.status(200).json({message: `Error: Insufficient chips for request.`, auth: 0})
+            }
+        })
+        .catch((err) => {
+            res.status(200).json({message: `Error: User does not exist.`, auth: 0})
+        })
+})
 
 app.get("/users", (req, res) => {
     res.json({message: "Hey there!"})

@@ -1,22 +1,12 @@
 import './Login.css';
 import React from 'react';
-import Register from './Register';
 import { useForm } from "react-hook-form";
-import UseToken from './UseToken';
 
-function Login() {
-  const { token, setToken } = UseToken();
-
+function Login({ setToken }) {
   const { register, handleSubmit, getValues } = useForm();
   const [show, setShow] = React.useState('');
   const openForm = () => setShow('1');
   const closeForm = () => setShow('');
-
-  function onLogout() {
-    //removes token and clears session storage, might find less redundant way to do this later
-    setToken({})
-    sessionStorage.clear()
-  }
 
   function onSubmit() {
     let user = getValues();
@@ -38,35 +28,26 @@ function Login() {
         })
   }
 
-  if (!token) {
-    return (
-      <div>
-        <div>
-          <button className="login-button" onClick={openForm}>Login</button>
-          <div style={{ visibility : (show === '1') ? "visible" : "hidden" }} className="login-popup" id="myLogin">
-            <form onSubmit={handleSubmit(onSubmit)} className="form-container">
-              <h1>Login</h1>
-              <label htmlFor="username"><b>Username</b></label>
-              <input type="text" placeholder="Enter Username" name="username" {...register("username")} required/>
-
-              <label htmlFor="password"><b>Password</b></label>
-              <input type="password" placeholder="Enter Password" name="password" {...register("password")} required/>
-
-              <button type="submit" className="btn">Login</button>
-              <button type="button" className="btn cancel" onClick={closeForm}>Close</button>
-            </form>
-          </div>
-        </div>
-        <Register />
-      </div>
-    );
-  }
-
   return (
     <div>
-      <button className="login-button" onClick={onLogout}>Logout</button>
+      <div>
+        <button className="login-button" onClick={openForm}>Login</button>
+        <div style={{ visibility : (show === '1') ? "visible" : "hidden" }} className="login-popup" id="myLogin">
+          <form onSubmit={handleSubmit(onSubmit)} className="form-container">
+            <h1>Login</h1>
+            <label htmlFor="username"><b>Username</b></label>
+            <input type="text" placeholder="Enter Username" name="username" {...register("username")} maxLength={12} required/>
+
+            <label htmlFor="password"><b>Password</b></label>
+            <input type="password" placeholder="Enter Password" name="password" {...register("password")} maxLength={20} required/>
+
+            <button type="submit" className="btn">Login</button>
+            <button type="button" className="btn cancel" onClick={closeForm}>Close</button>
+          </form>
+        </div>
+      </div>
     </div>
-  )
+  );
 }
 
 export default Login;

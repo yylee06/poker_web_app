@@ -1,22 +1,26 @@
-.register-button {
+.withdraw-button {
     background-color: #555;
     color: white;
     padding: 16px 20px;
     border: none;
     cursor: pointer;
     position: fixed;
-    top: 80px;
-    left: 28px;
-    width: 100px;
+    top: 23px;
+    right: 28px;
+    width: 150px;
 }
 
-.register-popup {
+.withdraw-popup {
     display: block;
     position: fixed;
     top: 23px;
-    left: 28px;
+    right: 28px;
     border: 3px solid #f1f1f1;
-    z-index: 10;
+    z-index: 9;
+}
+
+.form_label {
+    font-size: 18px;
 }
 
 .form-container {
@@ -25,7 +29,7 @@
     background-color: white;
 }
 
-.form-container input[type=text], .form-container input[type=password] {
+.form-container input[type=number] {
     width: 90%;
     padding: 15px;
     margin: 5px 0 22px 0;
@@ -33,7 +37,7 @@
     background: #f1f1f1;
 }
 
-.form-container input[type=text]:focus, .form-container input[type=password]:focus {
+.form-container input[type=number]:focus {
     background-color: #ddd;
     outline: none;
 }

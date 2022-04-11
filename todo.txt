@@ -1,13 +1,23 @@
 Short Term: 
-1. fix npm run dev command to install dependencies on client (DONE)
-2. Implement register form using React, not HTML (DONE)
-3. Implement login form using React, not HTML (DONE)
-4. Make register user form add to database (DONE)
-5. Create first user in database (DONE)
-6. Figure out how login authentication works
-7. Change page state based on whether or not user is logged in
-8. implement hashing, maybe username + password hashed?
+1. Add character limits to login and register forms (DONE)
+2. Make register API not accept duplicates and return accordingly. (DONE)
+3. Implement encoding for everything in localstorage and most things in sessionstorage. (DONE)
+4. Set up Components.js file to handle token authentication instead of Login.js (DONE)
+5. Implement poker chips, likely db holds player's max chips, and player's chips withdrawn to play. (DONE)
+6. Add and stylize withdrawl button and form. (DONE)
+7. Implement withdraw chip functionality. (DONE)
+8. Add and stylize deposit button and form. (DONE)
+9. Implement poker chip withdrawl into the chips_useable db column (DONE)
+10. Implement poker chip deposit into the chips_bank db column (DONE)
+
 
 Long Term:
 1. Figure out basics of how React works with the HTML and the React DOM
-2. Learn how to sqlite with node 
+2. Learn how to sqlite with node (DONE)
+3. Implement token authentication when user wants to do anything (mostly withdraw chips or play)
+4. Figure out a way to reduce the number of db calls overall
+
+Important Tips:
+1. Localstorage and Sessionstorage can be edited manually. You need to hash.
+2. Promises are not rejected unless the returned promise value is read. (pretty sure)
+3. Know the difference between encoding and hashing. I should hash the login token, but i should encode the number of chips stored in local storage.

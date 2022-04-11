@@ -15,9 +15,15 @@ function Register() {
 
     fetch('http://localhost:3080/register', {method: 'POST', body: user_body, headers: user_headers})
         .then(res => res.json())
-        .then(data => console.log(data))
-    
-    alert('User has been registered.');
+        .then((retrievedMessage) => {
+          if (retrievedMessage.auth === 1) {
+            closeForm()
+            alert('User has been registered.');
+          }
+          else {
+            alert('User with desired username already exists.');
+          }
+        })
   }
 
   return (
@@ -27,10 +33,10 @@ function Register() {
         <form onSubmit={handleSubmit(onSubmit)} className="form-container">
           <h1>Register</h1>
           <label htmlFor="username"><b>Desired Username</b></label>
-          <input type="text" placeholder="Desired Username" name="username" {...register("username")} required/>
+          <input type="text" placeholder="Desired Username" name="username" {...register("username")} maxLength={12} required/>
 
           <label htmlFor="password"><b>Desired Password</b></label>
-          <input type="password" placeholder="Desired Password" name="password" {...register("password")} required/>
+          <input type="password" placeholder="Desired Password" name="password" {...register("password")} maxLength={20} required/>
 
           <button type="submit" className="btn">Register</button>
           <button type="button" className="btn cancel" onClick={closeForm}>Close</button>
