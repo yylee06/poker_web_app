@@ -4,22 +4,22 @@ import Register from './Register';
 import Withdraw from './Withdraw';
 import Deposit from './Deposit';
 import App from './App';
-import useToken from './UseToken';
+import useLoginToken from './UseLoginToken';
 
 function Components() {
-  const { token, setToken } = useToken();
+  const { loginToken, setLoginToken } = useLoginToken();
 
   function onLogout() {
     //removes token and clears session storage, might find less redundant way to do this later
-    setToken({})
+    setLoginToken({})
     sessionStorage.clear()
   }
 
-  if (!token) {
+  if (!loginToken) {
     return (
       <div>
         <App />
-        <Login setToken={setToken} />
+        <Login setLoginToken={setLoginToken} />
         <Register />
       </div>
     )

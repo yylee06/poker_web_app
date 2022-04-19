@@ -2,7 +2,7 @@ import './Login.css';
 import React from 'react';
 import { useForm } from "react-hook-form";
 
-function Login({ setToken }) {
+function Login({ setLoginToken }) {
   const { register, handleSubmit, getValues } = useForm();
   const [show, setShow] = React.useState('');
   const openForm = () => setShow('1');
@@ -18,7 +18,7 @@ function Login({ setToken }) {
         .then((retrievedMessage) => {
           if (retrievedMessage.auth === 1) {
             closeForm()
-            setToken({token: retrievedMessage.token})
+            setLoginToken({token: retrievedMessage.token})
             sessionStorage.setItem("username", JSON.stringify({username: user.username}))
             console.log("You have logged in.")
           }

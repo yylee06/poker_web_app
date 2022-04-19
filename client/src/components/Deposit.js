@@ -9,7 +9,7 @@ function Deposit() {
   const openForm = () => setShow('1');
   const closeForm = () => setShow('');
 
-  const token_unparsed = sessionStorage.getItem('token')
+  const token_unparsed = sessionStorage.getItem('login-token')
   const token_parsed = JSON.parse(token_unparsed)
   const deposit_headers = {'Accept': 'application/json', 'Content-Type': 'application/json'};
 

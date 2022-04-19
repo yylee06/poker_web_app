@@ -1,14 +1,8 @@
 Short Term: 
-1. Add character limits to login and register forms (DONE)
-2. Make register API not accept duplicates and return accordingly. (DONE)
-3. Implement encoding for everything in localstorage and most things in sessionstorage. (DONE)
-4. Set up Components.js file to handle token authentication instead of Login.js (DONE)
-5. Implement poker chips, likely db holds player's max chips, and player's chips withdrawn to play. (DONE)
-6. Add and stylize withdrawl button and form. (DONE)
-7. Implement withdraw chip functionality. (DONE)
-8. Add and stylize deposit button and form. (DONE)
-9. Implement poker chip withdrawl into the chips_useable db column (DONE)
-10. Implement poker chip deposit into the chips_bank db column (DONE)
+1. Add art for player zones and cards on tables
+2. Make withdraw and deposit buttons invisible when in a game
+3. Develop APIs to enter a game
+4. Develop APIs to play the game
 
 
 Long Term:
@@ -16,8 +10,27 @@ Long Term:
 2. Learn how to sqlite with node (DONE)
 3. Implement token authentication when user wants to do anything (mostly withdraw chips or play)
 4. Figure out a way to reduce the number of db calls overall
+5. Map out how a poker game would go out and build from beginning to end.
 
 Important Tips:
 1. Localstorage and Sessionstorage can be edited manually. You need to hash.
 2. Promises are not rejected unless the returned promise value is read. (pretty sure)
-3. Know the difference between encoding and hashing. I should hash the login token, but i should encode the number of chips stored in local storage.
+3. Know the difference between encoding and hashing. I should hash the login token, but i should encode things stored in local storage.
+
+Ideas:
+1. For safety, I must send each card on the board on time, rather than at once. We can still have the identity of the deck server-side.
+2. User can "join game", either says it's full or puts user into the game, assets can be seen even if not in game (no harm)
+3. When user joins game, user is put into pool of players, and is put into the games thereafter.
+4. If a user does not press an option (call, bet, fold) within the given time (let's say 15 seconds), user folds. In this case, remove user from user pool for games thereafter.
+5. Assets are handled client-side. 
+6. Flop, turn, and river should be shown using POST requests (every client should do this), maybe using GET request even.
+7. Figure out how to handle if a user joins mid-game, maybe cache board cards for spectators?
+8. GET request for showdown or if all users except one fold (should be fast enough)
+9. Remember to re-render page after requests (not sure if done automatically, will have to test)
+10. POST request as soon as game starts, to give client card data to server
+11. GET request from users that are in the game but lost to show the winner's cards (only if showdown)
+
+Poker Rules:
+1. Button is the dealer (randomize this when a game begins), small blind and big blind are the next 2 players going clockwise respectively
+2. Player directly clockwise to the big blind is under the gun (i.e. bets first)
+3. In subsequent rounds (i.e. flop onwards), first active person clockwise of the button is under the gun first.
