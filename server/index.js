@@ -22,12 +22,19 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(bodyParser.text());
 
-
 //----connects to database----//
 const dao = new AppDAO('./server/users.sqlite3')
 const blogUserData = { username: 'ylee', password: 'dogwater' }
 const userRepo = new UserRepository(dao)
 //----------------------------//
+
+//array of usernames currently in the game
+const playing_users = [];
+//array of playing cards used by each user (2 cards in subarray per user by index)
+const playing_cards = [];
+//array of playing chips used by each user
+const playing_chips = [];
+
 
 //----direct database calls, use async function to call these----//
 //checks if the users table exists
@@ -43,7 +50,8 @@ function checkUserExists(username) {
 //calls the createUser sql query function, but also returns a hash for the login token
 function addNewUser(username, password) {
     const login_token = crypto.createHash('sha256').update(username).digest('hex')
-    return userRepo.createUser(username, password, login_token)
+    const game_token = crypto.createHash('sha256').update(login_token).digest('hex')
+    return userRepo.createUser(username, password, login_token, game_token)
 }
 
 //returns user with given username
@@ -172,7 +180,7 @@ app.post("/register", cors(), (req, res) => {
 app.post("/show_chips_bank", cors(), (req, res) => {
     const login_token = {token: req.body.token}
 
-    userRepo.getByToken(login_token.token)
+    userRepo.getByLoginToken(login_token.token)
         .then((retrievedUser) => {
             res.status(201).json({message: `Chips retrieved.`, amount: retrievedUser.chips_bank, auth: 1})
             resolve('success')
@@ -185,7 +193,7 @@ app.post("/show_chips_bank", cors(), (req, res) => {
 app.post("/show_chips_useable", cors(), (req, res) => {
     const login_token = {token: req.body.token}
 
-    userRepo.getByToken(login_token.token)
+    userRepo.getByLoginToken(login_token.token)
         .then((retrievedUser) => {
             res.status(201).json({message: `Chips retrieved.`, amount: retrievedUser.chips_useable, auth: 1})
             resolve('success')
@@ -198,7 +206,7 @@ app.post("/show_chips_useable", cors(), (req, res) => {
 app.post("/withdraw", cors(), (req, res) => {
     const user_request = {token: req.body.token, amount: req.body.amount}
 
-    userRepo.getByToken(user_request.token)
+    userRepo.getByLoginToken(user_request.token)
         .then((retrievedUser) => {
             if (user_request.amount <= retrievedUser.chips_bank) {
                 const new_bank = retrievedUser.chips_bank - user_request.amount
@@ -206,7 +214,7 @@ app.post("/withdraw", cors(), (req, res) => {
                 userRepo.updateChipsBank(new_bank, retrievedUser.username)
                     .then(() => {
                         userRepo.updateChipsUseable(new_useable, retrievedUser.username)
-                        res.status(201).json({message: `Chips withdrawn.`, auth: 1})
+                        res.status(201).json({message: `Chips withdrawn.`, amount: new_bank, auth: 1})
                         resolve('success')
                     })
                     .catch((err) => {
@@ -225,7 +233,7 @@ app.post("/withdraw", cors(), (req, res) => {
 app.post("/deposit", cors(), (req, res) => {
     const user_request = {token: req.body.token, amount: req.body.amount}
 
-    userRepo.getByToken(user_request.token)
+    userRepo.getByLoginToken(user_request.token)
         .then((retrievedUser) => {
             if (user_request.amount <= retrievedUser.chips_useable) {
                 const new_bank = retrievedUser.chips_bank + user_request.amount
@@ -233,7 +241,7 @@ app.post("/deposit", cors(), (req, res) => {
                 userRepo.updateChipsBank(new_bank, retrievedUser.username)
                     .then(() => {
                         userRepo.updateChipsUseable(new_useable, retrievedUser.username)
-                        res.status(201).json({message: `Chips deposited.`, auth: 1})
+                        res.status(201).json({message: `Chips deposited.`, amount: new_useable, auth: 1})
                         resolve('success')
                     })
                     .catch((err) => {
@@ -249,9 +257,81 @@ app.post("/deposit", cors(), (req, res) => {
         })
 })
 
+app.post("/join_game", cors(), (req, res) => {
+    const user_request = {token: req.body.token}
+
+    userRepo.getByLoginToken(user_request.token)
+        .then((retrievedUser) => {
+            if (playing_users.length === 10) {
+                res.status(200).json({message: `Error: Game is currently full.`, auth: 0})
+            }
+            else if (retrievedUser.chips_useable === 0) {
+                res.status(200).json({message: `Error: User does not have enough chips on hand.`, auth: 2})
+            }
+            else {
+                playing_users.push(retrievedUser.username)
+                playing_cards.push(['H1', 'C9'])
+                playing_chips.push(retrievedUser.chips_useable)
+                res.status(201).json({message: `User has entered the game.`, token: retrievedUser.game_token, auth: 1})
+            }
+        })
+        .catch((err) => {
+            res.status(200).json({message: `Error: User does not exist.`, auth: 0})
+        })
+})
+
+app.post("/exit_game", cors(), (req, res) => {
+    const user_request = {token: req.body.token}
+
+    userRepo.getByGameToken(user_request.token)
+        .then((retrievedUser) => {
+            let player_index = playing_users.indexOf(retrievedUser.username)
+            if (player_index > -1) {
+                playing_users.splice(player_index, 1)
+                playing_chips.splice(player_index, 1)
+                playing_cards.splice(player_index, 1)
+                res.status(201).json({message: "user has left the game.", auth: 1})
+            }
+            else {
+                res.status(200).json({message: "Fatal error: User is not currently in the game to leave.", auth: 0})
+            }
+        })
+        .catch((err) => {
+            res.status(200).json({message: "Error: Game token is invalid.", auth: 0})
+        })
+})
+
+app.post("/players", cors(), (req, res) => {
+    //game-token
+    const user_request = {token: req.body.token}
+    let shown_playing_cards = []
+    for (let i = 0; i < playing_users.length; i++) {
+        shown_playing_cards.push(['Back', 'Back'])
+    }
+
+    userRepo.getByGameToken(user_request.token)
+        .then((retrievedUser) => {
+            let player_index = playing_users.indexOf(retrievedUser.username)
+            if (player_index > -1) {
+                shown_playing_cards[player_index] = Array.from(playing_cards[player_index])
+                res.status(201).json({players: [...playing_users], chips: [...playing_chips], cards: [...shown_playing_cards], auth: 1})
+            }
+            else {
+                res.status(200).json({message: `Fatal Error: Player with game token not found in game.`, auth: 0})
+            }
+        })
+        .catch((err) => {
+            res.status(201).json({players: [...playing_users], chips: [...playing_chips], cards: [...shown_playing_cards], auth: 1})
+        })
+})
+
 app.get("/users", (req, res) => {
     res.json({message: "Hey there!"})
     getAllUsers();
+});
+
+app.get("/board_state", (req, res) => {
+    res.json({first: "C1", second: "H1", third: "S8", fourth: "CB", fifth: "D2"});
 });
 
 app.get('*', (req, res) => {

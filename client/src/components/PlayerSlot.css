@@ -1,0 +1,60 @@
+.card {
+    height: 100%;
+    width: 100%;
+    object-fit: contain;
+}
+
+.player-slot {
+    position: absolute;
+    border: white solid;
+    border-color: gray;
+    background-color: rgba(50, 54, 63, 0.75);
+    border-radius: 10px;
+    width: 280px;
+    height: 125px;
+    z-index: 5;
+}
+
+.empty-player-slot {
+    position: absolute;
+    visibility: hidden;
+    border-radius: 10px;
+    width: 280px;
+    height: 125px;
+    z-index: 5;
+}
+
+.card-slot1 {
+    position: absolute;
+    border-radius: 10px;
+    width: 75px;
+    height: 110px;
+    top: 5px;
+    left: 5px;
+    z-index: 2;
+}
+
+.card-slot2 {
+    position: absolute;
+    border-radius: 10px;
+    width: 75px;
+    height: 110px;
+    top: 5px;
+    left: 50px;
+    z-index: 2;
+}
+
+.username {
+    top: 10px;
+    right: 10px;
+    margin-top: 0px;
+    margin-bottom: 0px;
+    position: absolute;
+}
+
+.chips {
+    top: 45px;
+    right: 10px;
+    margin-top: 0px;
+    position: absolute;
+}

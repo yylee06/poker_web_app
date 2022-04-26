@@ -1,8 +1,9 @@
 Short Term: 
-1. Add art for player zones and cards on tables
-2. Make withdraw and deposit buttons invisible when in a game
-3. Develop APIs to enter a game
-4. Develop APIs to play the game
+    Implement Websockets
+    Create js file for holding player slots as divs (DONE)
+    Redo withdraw, deposit components for less redundancy, and no alerts required for updating chip state (DONE)
+    Build exit game API
+    Develop APIs to play the game
 
 
 Long Term:

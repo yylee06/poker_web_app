@@ -9,11 +9,11 @@ function Deposit() {
   const openForm = () => setShow('1');
   const closeForm = () => setShow('');
 
-  const token_unparsed = sessionStorage.getItem('login-token')
-  const token_parsed = JSON.parse(token_unparsed)
-  const deposit_headers = {'Accept': 'application/json', 'Content-Type': 'application/json'};
-
   React.useEffect(() => {
+    const token_unparsed = sessionStorage.getItem('login-token')
+    const token_parsed = JSON.parse(token_unparsed)
+    const deposit_headers = {'Accept': 'application/json', 'Content-Type': 'application/json'};
+
     fetch('http://localhost:3080/show_chips_useable', {method: 'POST', body: JSON.stringify({token: token_parsed?.token}), headers: deposit_headers})
     .then(res => res.json())
     .then((retrievedMessage) => {
@@ -24,9 +24,13 @@ function Deposit() {
         alert('Error: User does not have a valid number of chips.')
       }
     })
-  });
+  }, [show]);
 
   function onSubmit() {
+    const token_unparsed = sessionStorage.getItem('login-token')
+    const token_parsed = JSON.parse(token_unparsed)
+    const deposit_headers = {'Accept': 'application/json', 'Content-Type': 'application/json'};
+
     let deposit = getValues();
     let deposit_amount = parseInt(deposit.amount)
     const deposit_body = JSON.stringify({token: token_parsed?.token, amount: deposit_amount});
@@ -35,8 +39,7 @@ function Deposit() {
       .then(res => res.json())
       .then((retrievedMessage) => {
         if (retrievedMessage.auth === 1) {
-          closeForm()
-          alert('Amount has been deposited.');
+          setChips(retrievedMessage.amount)
         }
         else {
           alert('User does not have sufficient chips.');

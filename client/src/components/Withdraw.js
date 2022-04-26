@@ -9,11 +9,11 @@ function Withdraw() {
   const openForm = () => setShow('1');
   const closeForm = () => setShow('');
 
-  const token_unparsed = sessionStorage.getItem('login-token')
-  const token_parsed = JSON.parse(token_unparsed)
-  const withdraw_headers = {'Accept': 'application/json', 'Content-Type': 'application/json'};
-
   React.useEffect(() => {
+    const token_unparsed = sessionStorage.getItem('login-token')
+    const token_parsed = JSON.parse(token_unparsed)
+    const withdraw_headers = {'Accept': 'application/json', 'Content-Type': 'application/json'};
+
     fetch('http://localhost:3080/show_chips_bank', {method: 'POST', body: JSON.stringify({token: token_parsed?.token}), headers: withdraw_headers})
     .then(res => res.json())
     .then((retrievedMessage) => {
@@ -24,9 +24,13 @@ function Withdraw() {
         alert('Error: User does not have a valid number of chips.')
       }
     })
-  });
+  }, [show]);
 
   function onSubmit() {
+    const token_unparsed = sessionStorage.getItem('login-token')
+    const token_parsed = JSON.parse(token_unparsed)
+    const withdraw_headers = {'Accept': 'application/json', 'Content-Type': 'application/json'};
+
     let withdraw = getValues();
     let withdraw_amount = parseInt(withdraw.amount)
     const withdraw_body = JSON.stringify({token: token_parsed?.token, amount: withdraw_amount});
@@ -35,8 +39,7 @@ function Withdraw() {
       .then(res => res.json())
       .then((retrievedMessage) => {
         if (retrievedMessage.auth === 1) {
-          closeForm()
-          alert('Amount has been withdrawn.');
+          setChips(retrievedMessage.amount)
         }
         else {
           alert('User does not have sufficient chips.');

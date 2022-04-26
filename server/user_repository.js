@@ -11,16 +11,17 @@ class UserRepository {
             username TEXT NOT NULL, 
             password TEXT NOT NULL, 
             login_token TEXT NOT NULL,
+            game_token TEXT NOT NULL,
             chips_bank INTEGER DEFAULT 10000 NOT NULL,
             chips_useable INTEGER DEFAULT 0 NOT NULL)`
         return this.dao.run(sql)
     }
 
     //creates one user
-    createUser(username, password, login_token) {
+    createUser(username, password, login_token, game_token) {
         return this.dao.run(`INSERT INTO users (username,
-            password, login_token) VALUES (?, ?, ?)`, [username,
-            password, login_token])
+            password, login_token, game_token) VALUES (?, ?, ?, ?)`, [username,
+            password, login_token, game_token])
     }
 
     turnForeignKeysOff() {
@@ -86,8 +87,13 @@ class UserRepository {
     }
 
     //retrieves one user by login_token
-    getByToken(login_token) {
+    getByLoginToken(login_token) {
         return this.dao.get(`SELECT * FROM users WHERE login_token=?`, [login_token])
+    }
+
+    //retrieves one user by game_token
+    getByGameToken(game_token) {
+        return this.dao.get(`SELECT * FROM users WHERE game_token=?`, [game_token])
     }
 
     //retrieves all users
