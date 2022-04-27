@@ -1,9 +1,10 @@
 Short Term: 
-    Implement Websockets
-    Create js file for holding player slots as divs (DONE)
-    Redo withdraw, deposit components for less redundancy, and no alerts required for updating chip state (DONE)
+    Use websockets to make users aware when other players join.
+    Build start game API
+    Build game, send objects through JSON
     Build exit game API
     Develop APIs to play the game
+    Build stop game API
 
 
 Long Term:

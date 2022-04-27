@@ -1,14 +1,11 @@
 const path = require('path');
-const express = require("express");
 const Promise = require('bluebird');
 const AppDAO = require('./dao');
 const crypto = require("crypto")
 const cors = require('cors');
 const UserRepository = require('./user_repository');
 const { resolve } = require('path');
-const PORT = 3080;
 const bodyParser = require('body-parser');
-const app = express();
 
 //sets up cors to accept requests from http://localhost:3000 only
 var corsOptions = {
@@ -16,11 +13,28 @@ var corsOptions = {
     optionsSuccessStatus: 200
 }
 
+const express = require("express");
+const PORT = 3080;
+const app = express();
+
 //body-parser middleware to read POST requests
 app.use(cors(corsOptions));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(bodyParser.text());
+
+const server = require('http').createServer(app);
+const WebSocketServer = require('ws').Server
+const wss = new WebSocketServer({ server });
+
+wss.on('connection', function connection(ws) {
+    console.log("New Client has joined.")
+    ws.send(JSON.stringify({event:'Welcome new client!'}))
+    ws.on('message', function incoming(message) {
+        console.log("Received Message: " + message);
+        ws.send('Got your message!')
+    })
+});
 
 //----connects to database----//
 const dao = new AppDAO('./server/users.sqlite3')
@@ -34,7 +48,6 @@ const playing_users = [];
 const playing_cards = [];
 //array of playing chips used by each user
 const playing_chips = [];
-
 
 //----direct database calls, use async function to call these----//
 //checks if the users table exists
@@ -139,6 +152,10 @@ async function checkIfUserExists(username) {
 //deleteUsersTable()
 //deleteAllUsers()
 checkTable()
+
+server.listen(PORT, () => {
+    console.log(`Server listening on ${PORT}`);
+});
 
 app.get("/", )
 
@@ -272,10 +289,14 @@ app.post("/join_game", cors(), (req, res) => {
                 playing_users.push(retrievedUser.username)
                 playing_cards.push(['H1', 'C9'])
                 playing_chips.push(retrievedUser.chips_useable)
+                wss.clients.forEach(function each(client) {
+                    client.send(JSON.stringify({event: "player"}))
+                })
                 res.status(201).json({message: `User has entered the game.`, token: retrievedUser.game_token, auth: 1})
             }
         })
         .catch((err) => {
+            console.log(err)
             res.status(200).json({message: `Error: User does not exist.`, auth: 0})
         })
 })
@@ -290,6 +311,9 @@ app.post("/exit_game", cors(), (req, res) => {
                 playing_users.splice(player_index, 1)
                 playing_chips.splice(player_index, 1)
                 playing_cards.splice(player_index, 1)
+                wss.clients.forEach(function each(client) {
+                    client.send(JSON.stringify({event: "player"}))
+                })
                 res.status(201).json({message: "user has left the game.", auth: 1})
             }
             else {
@@ -302,26 +326,26 @@ app.post("/exit_game", cors(), (req, res) => {
 })
 
 app.post("/players", cors(), (req, res) => {
-    //game-token
+    //login-token
     const user_request = {token: req.body.token}
     let shown_playing_cards = []
     for (let i = 0; i < playing_users.length; i++) {
         shown_playing_cards.push(['Back', 'Back'])
     }
 
-    userRepo.getByGameToken(user_request.token)
+    userRepo.getByLoginToken(user_request.token)
         .then((retrievedUser) => {
             let player_index = playing_users.indexOf(retrievedUser.username)
             if (player_index > -1) {
                 shown_playing_cards[player_index] = Array.from(playing_cards[player_index])
-                res.status(201).json({players: [...playing_users], chips: [...playing_chips], cards: [...shown_playing_cards], auth: 1})
+                res.status(201).json({players: [...playing_users], chips: [...playing_chips], cards: [...shown_playing_cards]})
             }
             else {
-                res.status(200).json({message: `Fatal Error: Player with game token not found in game.`, auth: 0})
+                res.status(201).json({players: [...playing_users], chips: [...playing_chips], cards: [...shown_playing_cards]})
             }
         })
         .catch((err) => {
-            res.status(201).json({players: [...playing_users], chips: [...playing_chips], cards: [...shown_playing_cards], auth: 1})
+            res.status(201).json({players: [...playing_users], chips: [...playing_chips], cards: [...shown_playing_cards]})
         })
 })
 
@@ -338,9 +362,6 @@ app.get('*', (req, res) => {
     res.sendFile(path.resolve(__dirname, '../client/public', 'index.html'));
 });
 
-app.listen(PORT, () => {
-    console.log(`Server listening on ${PORT}`);
-});
 
 app.use(express.static(path.resolve(__dirname, '../client/public')));
 app.use(express.static('public'));

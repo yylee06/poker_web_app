@@ -4,32 +4,42 @@ import images from '../images/images';
 import PlayerSlot from './PlayerSlot';
 //images is a map of all cards, including the table and player assets
 
-function App() {
+function App({ socket }) {
   const [players, setPlayers] = React.useState([]);
   let [board, setBoard] = React.useState({});
 
-  const token_unparsed = sessionStorage.getItem('game-token')
-  const token_parsed = JSON.parse(token_unparsed)
-  const player_headers = {'Accept': 'application/json', 'Content-Type': 'application/json'};
-
-
   //sends game token, returns JSON object of players and respective cards (empty cards if not owned)
-  React.useEffect(() => {
+  function getPlayerState() {
+    const token_unparsed = sessionStorage.getItem('login-token')
+    const token_parsed = JSON.parse(token_unparsed)
+    const player_headers = {'Accept': 'application/json', 'Content-Type': 'application/json'};
+
     fetch('http://localhost:3080/players', {method: 'POST', body: JSON.stringify({token: token_parsed?.token}), headers: player_headers})
     .then(res => res.json())
     .then((retrievedMessage) => {
-      if (retrievedMessage.auth === 1) {
-        let current_players = [];
-        for (let i = 0; i < retrievedMessage.players.length; i++) {
-          current_players[i] = {username: retrievedMessage.players[i], chips: retrievedMessage.chips[i], card1: retrievedMessage.cards[i][0], card2: retrievedMessage.cards[i][1]}
-          setPlayers(current_players)
-        }
+      let current_players = [];
+      for (let i = 0; i < retrievedMessage.players.length; i++) {
+        current_players[i] = {username: retrievedMessage.players[i], chips: retrievedMessage.chips[i], card1: retrievedMessage.cards[i][0], card2: retrievedMessage.cards[i][1]}
       }
-      else {
-        alert(retrievedMessage.message)
+      setPlayers(current_players)
+    })
+  }
+
+  //Initializes player slots on mount
+  React.useEffect(() => {
+    getPlayerState();
+  }, []);
+
+  //Updates player slots when new players are added
+  React.useEffect(() => {
+    console.log("Event listeners added!")
+    socket.addEventListener('message', (event) => {
+      const received_message = JSON.parse(event.data)
+      if (received_message.event === "player") {
+        getPlayerState();
       }
     })
-  }, [board, players]);
+  }, [socket]);
 
   React.useEffect(() => {
     fetch("/board_state")

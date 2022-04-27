@@ -18,7 +18,7 @@ function JoinGame({ setGameToken }) {
           alert('You have no available chips on hand.');
         }
         else {
-          alert('Game is currently full.');
+          alert(retrievedMessage.message);
         }
     })
   }

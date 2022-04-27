@@ -12,6 +12,23 @@ function Components() {
   const { loginToken, setLoginToken } = useLoginToken();
   const { gameToken, setGameToken } = useGameToken();
 
+  const socket = React.useMemo(() => {
+    return new WebSocket('ws://localhost:3080');
+  }, [])
+
+  React.useEffect(() => {
+    //Connection opened
+    socket.onopen = () => {
+      console.log("Connection opened.")
+    }
+
+    socket.onclose = () => {
+      console.log("Connection closed.")
+    }
+
+    //return socket.close()
+  }, [socket]);
+
   function onLogout() {
     //removes token and clears session storage, might find less redundant way to do this later
     setLoginToken({})
@@ -41,7 +58,7 @@ function Components() {
   if (!loginToken) {
     return (
       <div>
-        <App />
+        <App socket={socket}/>
         <Login setLoginToken={setLoginToken} />
         <Register />
       </div>
@@ -51,7 +68,7 @@ function Components() {
   else if (!gameToken) {
     return (
       <div>
-        <App />
+        <App socket={socket}/>
         <Withdraw />
         <Deposit />
         <JoinGame setGameToken={setGameToken}/>
@@ -62,7 +79,7 @@ function Components() {
 
   return (
     <div>
-      <App />
+      <App socket={socket}/>
       <button className="exit-game-button" onClick={onExitGame}>Leave Game</button>
       <button className="login-button" onClick={onLogout}>Logout</button>
     </div>
