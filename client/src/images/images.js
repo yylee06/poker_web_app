@@ -53,7 +53,9 @@ import king_spades from './king_of_spades.png';
 import poker_table from './poker_table.png';
 import player_slot from './player_slot.png';
 import empty_card from './empty_card.png';
+import empty_card_player from './empty_card_player.png';
 import card_back from './card_back.png';
+import dark_card_back from './dark_card_back.png';
 
 const image_array = [['C1', ace_clubs], ['C2', two_clubs], ['C3', three_clubs], ['C4', four_clubs], ['C5', five_clubs], ['C6', six_clubs], ['C7', seven_clubs],
                ['C8', eight_clubs], ['C9', nine_clubs], ['CA', ten_clubs], ['CB', jack_clubs], ['CC', queen_clubs], ['CD', king_clubs], 
@@ -63,7 +65,7 @@ const image_array = [['C1', ace_clubs], ['C2', two_clubs], ['C3', three_clubs], 
                ['H8', eight_hearts], ['H9', nine_hearts], ['HA', ten_hearts], ['HB', jack_hearts], ['HC', queen_hearts], ['HD', king_hearts], 
                ['S1', ace_spades], ['S2', two_spades], ['S3', three_spades], ['S4', four_spades], ['S5', five_spades], ['S6', six_spades], ['S7', seven_spades],
                ['S8', eight_spades], ['S9', nine_spades], ['SA', ten_spades], ['SB', jack_spades], ['SC', queen_spades], ['SD', king_spades], ['Table', poker_table],
-               ['Player', player_slot], ['Empty', empty_card], ['Back', card_back]]
+               ['Player', player_slot], ['Empty', empty_card], ['EmptyPlayer', empty_card_player], ['Back', card_back], ['Dark', dark_card_back]]
 
 const images = new Map(image_array)
 

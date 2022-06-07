@@ -1,11 +1,30 @@
 Short Term: 
-    Use websockets to make users aware when other players join.
-    Build start game API
-    Build game, send objects through JSON
-    Build exit game API
-    Develop APIs to play the game
+    move components to other files to reduce re-rendering, then fix timer.
+    create PlayerChips component, separate from playerslots
+    Change tokens to strings, rather than objects, specifically to fix redundancy in retrieving ingame-token
+    Add dynamic timer when it is a certain user's turn
+    Add ingame-token to app instead of component.js, use token for start/stop game and actions.js
+    When timer is up, send default action
+    On mount and everytime players array changes, re-do player authentication to find player's index
+    add checking API
+    render actions.js from app.js, because information must come from app.js to actions.js
+    When game starts or ends, remember to clear the ready_players array, because we are reusing for starting and stopping.
+    Make a waiting queue for the game, queue members can enter game after end of each round, or if game has not started yet
     Build stop game API
+    Add cleanup for when socket connection closes (remove player from all arrays in server, wipe local storage)
+    Logout while in game should take a player out of the game, when the round is finished.
+    Add confirmation page before closing out of window on client side (before unload event listener)
+    Remove ingame-token when logging out, closing browser, leaving game
+    authenticate all tokens when using, likely do it in components.js
+    Find out what happens when a token is manually deleted client side, and how this affects the server. 
+    add feature to kick player out of table when they have less than 20 chips
+    send websocket message so that all clients know when one user folds (for visual effect)
+    add way to show cards during showdown
+    see how often playerslots re-renders during a game, big chance for optimization here through memoization
 
+Bugs:
+    When user logs out (as opposed to leaving game), likely same with closing browser, and rejoin and log back in, react state updates try to occur but cannot be done.
+     
 
 Long Term:
 1. Figure out basics of how React works with the HTML and the React DOM
@@ -13,6 +32,8 @@ Long Term:
 3. Implement token authentication when user wants to do anything (mostly withdraw chips or play)
 4. Figure out a way to reduce the number of db calls overall
 5. Map out how a poker game would go out and build from beginning to end.
+6. Figure out how to highlight actions one can take, and gray out invalid options
+7. add toggle functions to actions (fold, call, check)
 
 Important Tips:
 1. Localstorage and Sessionstorage can be edited manually. You need to hash.
@@ -31,6 +52,8 @@ Ideas:
 9. Remember to re-render page after requests (not sure if done automatically, will have to test)
 10. POST request as soon as game starts, to give client card data to server
 11. GET request from users that are in the game but lost to show the winner's cards (only if showdown)
+12. Start game API: toggle button on client if game has not started yet for (start game, with a #/# progress bar), server will have array of users ready, game starts when filled.
+13. Start game API will double as an end game API, therefore will always be loaded
 
 Poker Rules:
 1. Button is the dealer (randomize this when a game begins), small blind and big blind are the next 2 players going clockwise respectively

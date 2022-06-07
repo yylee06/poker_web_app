@@ -5,7 +5,7 @@
 }
 
 .poker-table-container {
-  position: relative;
+  position: absolute;
   width: 1059px;
   height: 573px;
   z-index: 1;
@@ -15,89 +15,6 @@
   width: auto;
   max-width: 100%;
   object-fit: cover;
-}
-
-.player-slot {
-  position: absolute;
-  border: white solid;
-  border-color: gray;
-  border-radius: 10px;
-  width: 236px;
-  height: 152px;
-  left: calc(50% - 25px);
-  top: calc(50% - 25px);
-}
-
-.card-slot {
-  position: absolute;
-  border: solid;
-  border-color: #282c34;
-  border-radius: 10px;
-  width: 102px;
-  height: 150px;
-  left: calc(50% - 25px);
-  top: calc(50% - 25px);
-  z-index: 2;
-}
-
-.player-slot:nth-of-type(2) {
-  transform: translateX(515px) translateY(-45px);
-}
-
-.player-slot:nth-of-type(3) {
-  transform: translateX(-760px) translateY(-45px);
-}
-
-.player-slot:nth-of-type(4) {
-  transform: translateX(410px) translateY(-257px);
-}
-
-.player-slot:nth-of-type(5) {
-  transform: translateX(410px) translateY(165px);
-}
-
-.player-slot:nth-of-type(6) {
-  transform: translateX(-655px) translateY(-257px);
-}
-
-.player-slot:nth-of-type(7) {
-  transform: translateX(-655px) translateY(165px);
-}
-
-.player-slot:nth-of-type(8) {
-  transform: translateX(110px) translateY(255px);
-}
-
-.player-slot:nth-of-type(9) {
-  transform: translateX(-350px) translateY(255px);
-}
-
-.player-slot:nth-of-type(10) {
-  transform: translateX(110px) translateY(-345px);
-}
-
-.player-slot:nth-of-type(11) {
-  transform: translateX(-350px) translateY(-345px);
-}
-
-.card-slot:nth-of-type(3) {
-  transform: translateX(-25px) translateY(-55px);
-}
-
-.card-slot:nth-of-type(2) {
-  transform: translateX(-155px) translateY(-55px);
-}
-
-.card-slot:nth-of-type(1) {
-  transform: translateX(-285px) translateY(-55px);
-}
-
-.card-slot:nth-of-type(4) {
-  transform: translateX(105px) translateY(-55px);
-}
-
-.card-slot:nth-of-type(5) {
-  transform: translateX(235px) translateY(-55px);
 }
 
 .App {

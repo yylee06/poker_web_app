@@ -7,10 +7,15 @@ import JoinGame from './JoinGame';
 import App from './App';
 import useLoginToken from './UseLoginToken';
 import useGameToken from './UseGameToken';
+import useIngameToken from './UseIngameToken';
+import StartGame from './StartGame';
+import StopGame from './StopGame';
 
 function Components() {
+  console.log("Rendering Component!")
   const { loginToken, setLoginToken } = useLoginToken();
   const { gameToken, setGameToken } = useGameToken();
+  const { ingameToken, setIngameToken } = useIngameToken();
 
   const socket = React.useMemo(() => {
     return new WebSocket('ws://localhost:3080');
@@ -58,7 +63,7 @@ function Components() {
   if (!loginToken) {
     return (
       <div>
-        <App socket={socket}/>
+        <App socket={socket} ingameToken={ingameToken} setIngameToken={setIngameToken}/>
         <Login setLoginToken={setLoginToken} />
         <Register />
       </div>
@@ -68,7 +73,7 @@ function Components() {
   else if (!gameToken) {
     return (
       <div>
-        <App socket={socket}/>
+        <App socket={socket} ingameToken={ingameToken} setIngameToken={setIngameToken}/>
         <Withdraw />
         <Deposit />
         <JoinGame setGameToken={setGameToken}/>
@@ -77,9 +82,21 @@ function Components() {
     )
   }
 
+  else if (!ingameToken) {
+    return (
+      <div>
+        <App socket={socket} ingameToken={ingameToken} setIngameToken={setIngameToken}/>
+        <StartGame />
+        <button className="exit-game-button" onClick={onExitGame}>Leave Game</button>
+        <button className="login-button" onClick={onLogout}>Logout</button>
+      </div>
+    );
+  }
+
   return (
     <div>
-      <App socket={socket}/>
+      <App socket={socket} ingameToken={ingameToken} setIngameToken={setIngameToken}/>
+      <StopGame />
       <button className="exit-game-button" onClick={onExitGame}>Leave Game</button>
       <button className="login-button" onClick={onLogout}>Logout</button>
     </div>

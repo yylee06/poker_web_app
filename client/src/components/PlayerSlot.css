@@ -12,7 +12,9 @@
     border-radius: 10px;
     width: 280px;
     height: 125px;
-    z-index: 5;
+    z-index: 2;
+    left: calc(50% - 25px);
+    top: calc(50% - 25px);
 }
 
 .empty-player-slot {
@@ -21,7 +23,7 @@
     border-radius: 10px;
     width: 280px;
     height: 125px;
-    z-index: 5;
+    z-index: 2;
 }
 
 .card-slot1 {
@@ -31,7 +33,7 @@
     height: 110px;
     top: 5px;
     left: 5px;
-    z-index: 2;
+    z-index: 3;
 }
 
 .card-slot2 {
@@ -41,7 +43,7 @@
     height: 110px;
     top: 5px;
     left: 50px;
-    z-index: 2;
+    z-index: 3;
 }
 
 .username {
@@ -49,12 +51,5 @@
     right: 10px;
     margin-top: 0px;
     margin-bottom: 0px;
-    position: absolute;
-}
-
-.chips {
-    top: 45px;
-    right: 10px;
-    margin-top: 0px;
     position: absolute;
 }

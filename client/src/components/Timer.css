@@ -1,0 +1,49 @@
+#timer {
+    position: absolute;
+    color: goldenrod;
+    z-index: 3;
+}
+
+.timer-loc--1 {
+    visibility: hidden;
+}
+
+.timer-loc-0 {
+    transform: translateX(745px) translateY(25px)
+}
+
+.timer-loc-1 {
+    transform: translateX(-537px) translateY(25px)
+}
+
+.timer-loc-2 {
+    transform: translateX(640px) translateY(-190px)
+}
+
+.timer-loc-3 {
+    transform: translateX(640px) translateY(230px)
+}
+
+.timer-loc-4 {
+    transform: translateX(-425px) translateY(-190px)
+}
+
+.timer-loc-5 {
+    transform: translateX(-425px) translateY(230px)
+}
+
+.timer-loc-6 {
+    transform: translateX(340px) translateY(320px)
+}
+
+.timer-loc-7 {
+    transform: translateX(-120px) translateY(320px)
+}
+
+.timer-loc-8 {
+    transform: translateX(-120px) translateY(-280px)
+}
+
+.timer-loc-9 {
+    transform: translateX(340px) translateY(-280px)
+}

@@ -1,0 +1,11 @@
+.ready-player-fraction {
+    margin-top: 10px;
+    margin-bottom: 10px;
+    font-size: 18px;
+}
+  
+.ready-player-fraction-container {
+    position: absolute;
+    top: 75px;
+    left: calc(50% - 15px);
+}

@@ -1,0 +1,15 @@
+.chip-value {
+    margin-top: 10px;
+    color: black;
+}
+
+.table-chip {
+    position: absolute;
+    background-color: #faed27;
+    display: inline-block;
+    border-radius: 40%;
+    width: 60px;
+    height: 50px;
+    box-sizing: border-box;
+    z-index: 5;
+}

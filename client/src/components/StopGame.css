@@ -1,0 +1,13 @@
+.stop-game-button {
+    background-color: rgb(236, 88, 88);
+    color: white;
+    border: 2px;
+    border-color: #9ecaed;
+    border-radius: 4px;
+    cursor: pointer;
+    width: 150px;
+    height: 47px;
+    position: absolute;
+    top: 23px;
+    left: calc(50% - 75px);
+}

@@ -6,8 +6,8 @@ function Withdraw() {
   const { register, handleSubmit, getValues } = useForm();
   const [show, setShow] = React.useState('');
   const [chips, setChips] = React.useState('0');
-  const openForm = () => setShow('1');
-  const closeForm = () => setShow('');
+  const openForm = () => setShow(1);
+  const closeForm = () => setShow(0);
 
   React.useEffect(() => {
     const token_unparsed = sessionStorage.getItem('login-token')
@@ -50,7 +50,7 @@ function Withdraw() {
   return (
     <div>
       <button className="withdraw-button" onClick={openForm}>Withdraw Chips</button>
-      <div style={{ visibility : (show === '1') ? "visible" : "hidden" }} className="withdraw-popup">
+      <div style={{ visibility : (show === 1) ? "visible" : "hidden" }} className="withdraw-popup">
         <form onSubmit={handleSubmit(onSubmit)} className="form-container">
           <h3>Chips in Bank: </h3>
           <h3>{(!chips && chips !== 0) ? "Loading..." : chips}</h3>

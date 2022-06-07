@@ -1,15 +1,15 @@
 import './Deposit.css';
-import React from 'react';
+import { useState, useEffect} from 'react';
 import { useForm } from "react-hook-form"
 
 function Deposit() {
   const { register, handleSubmit, getValues } = useForm();
-  const [show, setShow] = React.useState('');
-  const [chips, setChips] = React.useState('0');
-  const openForm = () => setShow('1');
-  const closeForm = () => setShow('');
+  const [show, setShow] = useState(0);
+  const [chips, setChips] = useState('0');
+  const openForm = () => setShow(1);
+  const closeForm = () => setShow(0);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const token_unparsed = sessionStorage.getItem('login-token')
     const token_parsed = JSON.parse(token_unparsed)
     const deposit_headers = {'Accept': 'application/json', 'Content-Type': 'application/json'};
@@ -50,7 +50,7 @@ function Deposit() {
   return (
     <div>
       <button className="deposit-button" onClick={openForm}>Deposit Chips</button>
-      <div style={{ visibility : (show === '1') ? "visible" : "hidden" }} className="deposit-popup">
+      <div style={{ visibility : (show === 1) ? "visible" : "hidden" }} className="deposit-popup">
         <form onSubmit={handleSubmit(onSubmit)} className="form-container">
           <h3>Chips on Hand: </h3>
           <h3>{(!chips && chips !== 0) ? "Loading..." : chips}</h3>

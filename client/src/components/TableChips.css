@@ -1,0 +1,39 @@
+.table-chip:nth-of-type(1) {
+    transform: translateX(400px) translateY(-45px);
+}
+  
+.table-chip:nth-of-type(2) {
+    transform: translateX(-470px) translateY(-50px);
+}
+  
+.table-chip:nth-of-type(3) {
+    transform: translateX(270px) translateY(-170px);
+}
+  
+.table-chip:nth-of-type(4) {
+    transform: translateX(330px) translateY(75px);
+}
+  
+.table-chip:nth-of-type(5) {
+    transform: translateX(-330px) translateY(-170px);
+}
+  
+.table-chip:nth-of-type(6) {
+    transform: translateX(-385px) translateY(75px);
+}
+  
+.table-chip:nth-of-type(7) {
+    transform: translateX(160px) translateY(145px);
+}
+  
+.table-chip:nth-of-type(8) {
+    transform: translateX(-210px) translateY(145px);
+}
+  
+.table-chip:nth-of-type(9) {
+    transform: translateX(90px) translateY(-220px);
+}
+  
+.table-chip:nth-of-type(10) {
+    transform: translateX(-140px) translateY(-220px);
+}

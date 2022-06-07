@@ -4,7 +4,7 @@
     padding: 16px 20px;
     border: none;
     cursor: pointer;
-    position: fixed;
+    position: absolute;
     top: 137px;
     right: 28px;
     width: 150px;
@@ -16,7 +16,7 @@
     padding: 16px 20px;
     border: none;
     cursor: pointer;
-    position: fixed;
+    position: absolute;
     top: 23px;
     right: 28px;
     width: 150px;

@@ -1,0 +1,54 @@
+#dealer_slot {
+    position: absolute;
+    height: 30px;
+    width: 30px;
+    z-index: 2;
+}
+
+.chip {
+    object-fit: cover;
+}
+
+.dealer_slot-loc--1 {
+    visibility: hidden;
+}
+
+.dealer_slot-loc-0 {
+    transform: translateX(415px) translateY(15px)
+}
+
+.dealer_slot-loc-1 {
+    transform: translateX(-470px) translateY(15px)
+}
+
+.dealer_slot-loc-2 {
+    transform: translateX(280px) translateY(120px)
+}
+
+.dealer_slot-loc-3 {
+    transform: translateX(340px) translateY(-140px)
+}
+
+.dealer_slot-loc-4 {
+    transform: translateX(-385px) translateY(-140px)
+}
+
+.dealer_slot-loc-5 {
+    transform: translateX(-330px) translateY(120px)
+}
+
+.dealer_slot-loc-6 {
+    transform: translateX(100px) translateY(170px)
+}
+
+.dealer_slot-loc-7 {
+    transform: translateX(-130px) translateY(170px)
+}
+
+.dealer_slot-loc-8 {
+    transform: translateX(-200px) translateY(-210px)
+}
+
+.dealer_slot-loc-9 {
+    transform: translateX(160px) translateY(-210px)
+}
