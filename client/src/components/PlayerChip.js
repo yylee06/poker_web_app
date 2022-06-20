@@ -5,7 +5,7 @@ function PlayerChip({ chips }) {
     if (chips > -1) {
         return (
             <div>
-                <h6 className="chips">{chips}</h6>
+                <h6 className="player_chip" id="player_chip">{chips}</h6>
             </div>
         )
     }

@@ -8,7 +8,7 @@
     position: absolute;
     border: white solid;
     border-color: gray;
-    background-color: rgba(50, 54, 63, 0.75);
+    background-color: rgba(50, 54, 63, 0.6);
     border-radius: 10px;
     width: 280px;
     height: 125px;
@@ -48,6 +48,14 @@
 
 .username {
     top: 10px;
+    right: 10px;
+    margin-top: 0px;
+    margin-bottom: 0px;
+    position: absolute;
+}
+
+.player_chip {
+    top: 50px;
     right: 10px;
     margin-top: 0px;
     margin-bottom: 0px;

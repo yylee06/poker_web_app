@@ -5,23 +5,18 @@ import images from '../images/images';
 
 function PlayerSlots({ socket, setIngameToken }) {
     const [players, setPlayers] = useState([]);
-    const [playerIndex, setPlayerIndex] = useState(-1);
+    const [playerChips, setPlayerChips] = useState([]);
 
-    const callbackPlayerIndex = useCallback(() => {
-        const token_unparsed = sessionStorage.getItem('login-token')
-        const token_parsed = JSON.parse(token_unparsed)
-        const player_headers = {'Accept': 'application/json', 'Content-Type': 'application/json'};
-    
-        //POST request to get own player's index using login token authentication
-        function getPlayerIndex() {
-          fetch('http://localhost:3080/player_index', {method: 'POST', body: JSON.stringify({token: token_parsed?.token}), headers: player_headers})
+    const callbackPlayerChipsState = useCallback(() => {
+      function getPlayerChipsState() {
+        fetch('http://localhost:3080/player_chips')
           .then(res => res.json())
           .then((retrievedMessage) => {
-            setPlayerIndex(retrievedMessage.index)
+            setPlayerChips(retrievedMessage.chips)
           })
-        }
-    
-        getPlayerIndex();
+      }
+  
+      getPlayerChipsState()
     }, [])
     
     const callbackPlayerState = useCallback(() => {
@@ -70,8 +65,8 @@ function PlayerSlots({ socket, setIngameToken }) {
     //only on first render
     useEffect(() => {
         callbackPlayerState()
-        callbackPlayerIndex()
-    }, [callbackPlayerState, callbackPlayerIndex])
+        callbackPlayerChipsState()
+    }, [callbackPlayerState, callbackPlayerChipsState])
 
     useEffect(() => {
         console.log("Player event listeners added!")
@@ -81,11 +76,14 @@ function PlayerSlots({ socket, setIngameToken }) {
             switch(received_message.event) {
                 case "player":
                     callbackPlayerState();
-                    callbackPlayerIndex();
+                    callbackPlayerChipsState();
                     break;
                 case "first_turn":
                     callbackPlayerState();
                     callbackIngameToken();
+                    break;
+                case "next_turn":
+                    callbackPlayerChipsState();
                     break;
                 default:
             }
@@ -94,30 +92,30 @@ function PlayerSlots({ socket, setIngameToken }) {
         socket.addEventListener('message', handlePlayers)
 
         return () => { socket.removeEventListener('message', handlePlayers) }
-    }, [callbackPlayerState, callbackPlayerIndex, callbackIngameToken]);
+    }, [socket, callbackPlayerState, callbackIngameToken, callbackPlayerChipsState]);
 
     return (
         <div>
             <PlayerSlot currPlayer={(players.length < 1) ? {inUse:0} : {username:players[0].username, inUse: 1,
-                        card1: images.get(players[0].card1), card2: images.get(players[0].card2)}}  />
+                        card1: images.get(players[0].card1), card2: images.get(players[0].card2), playerChips: playerChips[0]}}  />
             <PlayerSlot currPlayer={(players.length < 2) ? {inUse:0} : {username:players[1].username, inUse: 1,
-                        card1: images.get(players[1].card1), card2: images.get(players[1].card2)}}  />
+                        card1: images.get(players[1].card1), card2: images.get(players[1].card2), playerChips: playerChips[1]}}  />
             <PlayerSlot currPlayer={(players.length < 3) ? {inUse:0} : {username:players[2].username, inUse: 1,
-                        card1: images.get(players[2].card1), card2: images.get(players[2].card2)}} />
+                        card1: images.get(players[2].card1), card2: images.get(players[2].card2), playerChips: playerChips[2]}} />
             <PlayerSlot currPlayer={(players.length < 4) ? {inUse:0} : {username:players[3].username, inUse: 1,
-                        card1: images.get(players[3].card1), card2: images.get(players[3].card2)}} />
+                        card1: images.get(players[3].card1), card2: images.get(players[3].card2), playerChips: playerChips[3]}} />
             <PlayerSlot currPlayer={(players.length < 5) ? {inUse:0} : {username:players[4].username, inUse: 1,
-                        card1: images.get(players[4].card1), card2: images.get(players[4].card2)}} />
+                        card1: images.get(players[4].card1), card2: images.get(players[4].card2), playerChips: playerChips[4]}} />
             <PlayerSlot currPlayer={(players.length < 6) ? {inUse:0} : {username:players[5].username, inUse: 1,
-                        card1: images.get(players[5].card1), card2: images.get(players[5].card2)}} />
+                        card1: images.get(players[5].card1), card2: images.get(players[5].card2), playerChips: playerChips[5]}} />
             <PlayerSlot currPlayer={(players.length < 7) ? {inUse:0} : {username:players[6].username, inUse: 1,
-                        card1: images.get(players[6].card1), card2: images.get(players[6].card2)}} />
+                        card1: images.get(players[6].card1), card2: images.get(players[6].card2), playerChips: playerChips[6]}} />
             <PlayerSlot currPlayer={(players.length < 8) ? {inUse:0} : {username:players[7].username, inUse: 1,
-                        card1: images.get(players[7].card1), card2: images.get(players[7].card2)}} />
+                        card1: images.get(players[7].card1), card2: images.get(players[7].card2), playerChips: playerChips[7]}} />
             <PlayerSlot currPlayer={(players.length < 9) ? {inUse:0} : {username:players[8].username, inUse: 1,
-                        card1: images.get(players[8].card1), card2: images.get(players[8].card2)}} />
+                        card1: images.get(players[8].card1), card2: images.get(players[8].card2), playerChips: playerChips[8]}} />
             <PlayerSlot currPlayer={(players.length < 10) ? {inUse:0} : {username:players[9].username, inUse: 1,
-                        card1: images.get(players[9].card1), card2: images.get(players[9].card2)}} />
+                        card1: images.get(players[9].card1), card2: images.get(players[9].card2), playerChips: playerChips[9]}} />
         </div>
     )
 }

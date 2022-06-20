@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 
 //currentDealer: index of the current owner of the dealer chip
 function Dealer({ socket }) {
-    const [dealer, setDealer] = useState(-1);
+    const [dealer, setDealer] = useState(0);
 
     const callbackDealer = useCallback(() => {
         function getDealer() {
@@ -31,7 +31,7 @@ function Dealer({ socket }) {
         socket.addEventListener('message', handleDealer)
 
         return () => { socket.removeEventListener('message', handleDealer) }
-    }, [callbackDealer]);
+    }, [socket, callbackDealer]);
 
     return (
         <div>

@@ -1,5 +1,5 @@
 import './Actions.css'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm } from "react-hook-form"
 
 //passed variable isTurn === 1 if it is current player's turn, 0 otherwise
@@ -7,8 +7,6 @@ function Actions({ socket }) {
     const { register, handleSubmit, getValues } = useForm();
     const [showRaiseForm, setShowRaiseForm] = useState(0);
     const [highestBet, setHighestBet] = useState(0);
-    const [useableChips, setUseableChips] = useState(0);
-
 
     const token_unparsed = sessionStorage.getItem('ingame-token')
     const token_parsed = JSON.parse(token_unparsed)
@@ -69,47 +67,20 @@ function Actions({ socket }) {
         }
     }
 
-    const callbackPlayerChips = useCallback(() => {
-        const login_token_unparsed = sessionStorage.getItem('login-token')
-        const login_token_parsed = JSON.parse(login_token_unparsed)
-        const chips_headers = {'Accept': 'application/json', 'Content-Type': 'application/json'};
-    
-        function getPlayerChips() {
-            fetch('http://localhost:3080/show_chips_useable', {method: 'POST', body: JSON.stringify({token: login_token_parsed?.token}), headers: chips_headers})
-                .then(res => res.json())
-                .then((retrievedMessage) => {
-                    if (retrievedMessage.auth === 1) {
-                        if (useableChips != retrievedMessage.amount) {
-                            setUseableChips(retrievedMessage.amount)
-                        }
-                    }
-                    else {
-                        alert('Error: User does not have a valid number of chips.')
-                    }
-                })
-        }
-
-        getPlayerChips()
-    }, [])
-
     useEffect(() => {
         console.log("Actions event listeners added!")
     
         function handleChips(event) {
             const received_message = JSON.parse(event.data)
             if (received_message.event === "next_turn") {
-                callbackPlayerChips()
-
-                if (received_message.highest_bet != highestBet) {
-                    setHighestBet(received_message.highest_bet)
-                }
+                setHighestBet(received_message.highest_bet)
             }
         }
     
         socket.addEventListener('message', handleChips)
 
         return () => { socket.removeEventListener('message', handleChips) }
-    }, [callbackPlayerChips]);
+    }, [socket]);
 
 
 

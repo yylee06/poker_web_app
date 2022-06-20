@@ -18,6 +18,12 @@ function TableChips({ socket }) {
     }, [])
 
     useEffect(() => {
+        console.log("Table chips initially rendered.")
+
+        callbackTableChipsState()
+    }, [callbackTableChipsState])
+
+    useEffect(() => {
         console.log("Table chips event listeners added!")
     
         function handleTableChips(event) {
@@ -30,7 +36,7 @@ function TableChips({ socket }) {
         socket.addEventListener('message', handleTableChips)
 
         return () => { socket.removeEventListener('message', handleTableChips) }
-    }, [callbackTableChipsState]);
+    }, [socket, callbackTableChipsState]);
 
 
     return (

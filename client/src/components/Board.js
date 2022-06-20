@@ -2,36 +2,35 @@ import './Board.css';
 import images from '../images/images';
 import { useState, useEffect, useCallback } from 'react';
 
-//currentDealer: index of the current owner of the dealer chip
-function Dealer({ socket }) {
-    const [dealer, setDealer] = useState(-1);
+function Board({ socket }) {
+    const [board, setBoard] = useState({first: "Empty", second: "Empty", third: "Empty", fourth: "Empty", fifth: "Empty"});
 
-    const callbackDealer = useCallback(() => {
-        function getDealer() {
-          fetch('http://localhost:3080/dealer')
+    const callbackBoard = useCallback(() => {
+        function getBoard() {
+          fetch('http://localhost:3080/board_state')
             .then(res => res.json())
             .then((retrievedMessage) => {
-              setDealer(retrievedMessage.dealer)
+              setBoard(retrievedMessage)
             })
         }
     
-        getDealer()
+        getBoard()
     }, [])
 
     useEffect(() => {
-        console.log("Dealer event listeners added!")
+        console.log("Board event listeners added!")
     
-        function handleDealer(event) {
+        function handleBoard(event) {
             const received_message = JSON.parse(event.data)
-            if (received_message.event === "first_turn") {
-                callbackDealer()
+            if (received_message.event === "update_board") {
+                callbackBoard()
             }
         }
     
-        socket.addEventListener('message', handleDealer)
+        socket.addEventListener('message', handleBoard)
 
-        return () => { socket.removeEventListener('message', handleDealer) }
-    }, [callbackDealer]);
+        return () => { socket.removeEventListener('message', handleBoard) }
+    }, [socket, callbackBoard]);
 
     return (
         <div>
@@ -54,4 +53,4 @@ function Dealer({ socket }) {
     );
 }
 
-export default Dealer;
+export default Board;

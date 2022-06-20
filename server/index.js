@@ -7,6 +7,8 @@ const UserRepository = require('./user_repository');
 const { resolve } = require('path');
 const bodyParser = require('body-parser');
 const Deck = require('./deck');
+//allotted_time for timer, can be changed at will
+const ALLOTTED_TIME = 31
 
 //sets up cors to accept requests from http://localhost:3000 only
 var corsOptions = {
@@ -71,24 +73,259 @@ let current_turn = -1;
 //number of chips currently on the table (not including open bets, value only changes when a user folds or a round is over)
 let house_chips = 0;
 //current highest bet on the table, default to big blind of 20
-let highest_bet = 20;
+let highest_bet = 0;
 //shuffled deck
 let shuffled_deck = deck.shuffleDeck(unshuffled_deck)
 //sorted array of best hands from best to worst
 let sorted_winners = [];
 //array of players in game by index, 1 for in game, 0 for folded
 let players_ingame = [];
-
+//array of playeres that are currently all-in by index, 1 for in game, 0 for folded
+let all_in_users = [];
+//array of players that have called all-in (holds objects {bet_size, player_index})
+let all_ins = [];
+//array of side pots (holds objects {pot_size, participants})
+let side_pots = [];
 //index of the player holding the button, incremented by 1 each game, modulus playing_users
 let button_index = -1;
+//working timer object, holds turn timer and current player (in case player exits browser)
+//timer set to -1 initially to not trigger default action, used for server-side turn detection
+let working_timer = {timer: -1, current_actor: ''}
+
+//timer always running, reset to 30 decrementing every turn
+setInterval(() => {
+    working_timer.timer -= 1
+    console.log(working_timer.timer)
+
+    if (working_timer.timer === 0) {
+        //do default action, because time ran out
+        defaultAction(working_timer.current_actor)
+    }
+        
+}, 1000);
+
+//sets highest_bet to parameterized value
+function setHighestBet(default_value) {
+    highest_bet = default_value
+}
+
+//function called at end of round if any user calls all-in in given round
+function calculateSidePots() {
+    function sortByBetSize(a, b) {
+        if (a.bet_size < b.bet_size) {
+            return -1
+        }
+        if (a.bet_size > b.bet_size) {
+            return 1
+        }
+        return 0
+    }
+
+    //sort and reverse to be used as a stack
+    if (all_ins.length > 1) {
+        all_ins.sort(sortByBetSize)
+        all_ins.reverse()
+    }
+
+    //smallest all-in, also used to calculate side pot offsets
+    let main_pot_bet = all_ins.pop().bet_size
+
+    //calculate main pot, then side pots
+
+    table_chips.forEach((element, index) => {
+        if (element >= main_pot_bet) {
+            if (side_pots.length > 0) {
+                side_pots[side_pots.length - 1].pot_size += main_pot_bet
+            }
+            else {
+                house_chips += main_pot_bet
+            }
+            table_chips[index] -= main_pot_bet
+        }
+        else if (element > 0) {
+            if (side_pots.length > 0) {
+                side_pots[side_pots.length - 1].pot_size += element
+            }
+            else {
+                house_chips += element
+            }
+            table_chips[index] = 0
+        }
+    })
+
+    //calculate all side pots
+    while(all_ins.length > 0) {
+        let side_pot_total = 0
+        let side_pot_participants = []
+        let side_pot_bet = all_ins.pop()
+        let side_pot_offset = side_pot_bet.bet_size - main_pot_bet
+
+        //calculate size of side pot
+        table_chips.forEach((element, index) => {
+            if (element >= side_pot_offset) {
+                side_pot_total += side_pot_offset
+                table_chips[index] -= side_pot_offset
+                side_pot_participants.push(playing_users[index])
+            }
+            else if (element > 0) {
+                side_pot_total += element
+                table_chips[index] = 0
+            }
+        })
+
+        side_pots.push({pot_size: side_pot_total, participants: side_pot_participants})
+
+        //updates to calculate offset for next side pot (if any)
+        main_pot_bet = side_pot_bet.bet_size
+    }
+
+    //final side pot is made (for any more subsequent bets, set default to 0)
+    let side_pot_total = 0
+    let side_pot_participants = []
+
+    table_chips.forEach((element, index) => {
+        if (element > 0) {
+            side_pot_total += element
+            table_chips[index] = 0
+            side_pot_participants.push(playing_users[index])
+        }
+        else if (players_ingame[index] && !all_in_users[index]) {
+            side_pot_participants.push(playing_users[index])
+        }
+    })
+
+    side_pots.push({pot_size: side_pot_total, participants: side_pot_participants})
+}
+
+//called at end of each game to calculate and distribute main and side pots
+function calculateWinnings() {
+    function distributeWinnings(winner, earnings) {
+        userRepo.getByUsername(winner)
+            .then((retrievedUser) => {
+                let new_useable = retrievedUser.chips_useable + earnings
+                userRepo.updateChipsUseable(new_useable, winner)
+            })
+            .catch((err) => {
+                console.log("Error: User is not here to receive prize.")
+            })
+    }
+
+    //calculate main pot winner
+    const winner = sorted_winners[0]
+
+    //if there is a tie
+    if (Array.isArray(winner)) {
+        house_chips = Math.floor(house_chips/winner.length)
+        for (let curr_winner of winner) {
+            distributeWinnings(curr_winner, house_chips)
+        }
+    }
+    //if there is a single winner
+    else {
+        distributeWinnings(winner, house_chips)
+                    
+    }
+
+    //calculate side pots
+    while (side_pots.length > 0) {
+        //index used to iterate through sorted_winners array to find valid winner for side pot
+        let side_pot = side_pots.pop()
+        let side_pot_winners = []
+        let winner_index = 0
+
+        if (side_pot.pot_size === 0) {
+            return;
+        }
+
+        while (side_pot_winners.length === 0) {
+            //testing for side pot tie
+            if (Array.isArray(sorted_winners[winner_index])) {
+                for (let possible_winner of sorted_winners[winner_index]) {
+                    if (side_pot.participants.indexOf(possible_winner) > -1) {
+                        side_pot_winners.push(possible_winner)
+                    }
+                }
+            }
+            //iterating through winners normally 
+            else {
+                if (side_pot.participants.indexOf(sorted_winners[winner_index]) > -1) {
+                    side_pot_winners.push(sorted_winners[winner_index])
+                }
+            }
+            winner_index += 1
+        }
+
+        let side_pot_earnings = Math.floor(side_pot.pot_size/side_pot_winners.length)
+        for (let curr_winner of side_pot_winners) {
+            distributeWinnings(curr_winner, side_pot_earnings)
+        }
+    }
+}
+
+//performs the default action (check or fold) due to time running out
+function defaultAction(username) {
+    let player_index = playing_users.indexOf(username)
+
+    if (table_chips[current_turn] !== highest_bet || player_index === -1) {
+        //user folds
+        players_ingame[current_turn] = 0
+        deck.userFolds(username, sorted_winners)
+
+        //remove user that folded from all relevant side pots
+        if (side_pots.length > 0) {
+            side_pots.forEach((element, index) => {
+                let side_pot_index = element.participants.indexOf(username)
+                if (side_pot_index > -1) {
+                    side_pots[index].participants.splice(side_pot_index, 1)
+                }
+            })
+        }
+
+        //winner is decided, only 1 player is left
+        if ([players_ingame.reduce((a, b) => a + b, 0)] === 1) {
+            calculateWinnings()
+            setupFirstRound()
+        }
+        else if (actions.length === 0) {
+            setupNextRound()
+        }
+    }
+    else {
+        //user checks
+        if (actions.length === 0) {
+            setupNextRound()
+        }
+    }
+
+    setTimeout(sendNextTurn, 500)
+}
+
+function resetTimer(current_actor) {
+    working_timer = {timer: ALLOTTED_TIME, current_actor: current_actor}
+}
 
 //sends the next turn to the client, in turn the client updates the players, chips, and sends a http post request with the answer
 function sendNextTurn() {
+    //if users_ingame - users_all_in <= 1, this means that no further actions can be taken yet the game progresses to the end
+    let users_ingame = players_ingame.reduce((a, b) => a + b, 0)
+    let users_all_in = all_in_users.reduce((a, b) => a + b, 0)
+
+    if ((users_ingame - users_all_in) <= 1) {
+        setupNextRound()
+        return;
+    }
+
     current_turn = actions.pop()
+
+    //username taken initially in case user exits browser before timer reaches 0
+    let current_actor = playing_users[current_turn]
+
     //sends the first turn to each client (must be sent to every client for visual timer)
     wss.clients.forEach(function each(client) {
         client.send(JSON.stringify({event: "next_turn", highest_bet: highest_bet, turn: current_turn}))
     })
+
+    resetTimer(current_actor)
 }
 
 //initializes the chip values of every player
@@ -128,11 +365,18 @@ function setBlinds() {
     table_chips[big_blind_index] = 20
 }
 
-//submits all the chips to the house, and then resets chip values of each player for the next round
+//submits all the chips to the main or side pot, and then resets chip values of each player for the next round
 function submitChips() {
-    for (let chips of table_chips) {
-        house_chips += chips
+    let pot_offset = table_chips.reduce((a, b) => a + b, 0)
+
+    if (side_pots.length > 0) {
+        //adds chips to side pot
+        side_pots[side_pots.length - 1].pot_size += pot_offset
     }
+    else {
+        house_chips += pot_offset
+    }
+
     resetChips()
 }
 
@@ -157,13 +401,13 @@ function buildActionsArray(last_action, is_raise) {
     }
 
     for (let i = first_actor; i < playing_users.length; i++) {
-        if (players_ingame[i] === 1) {
+        if (players_ingame[i] && !all_in_users[i]) {
             actions.push(i)
         }
     }
 
     for (let j = 0; j < first_actor; j++) {
-        if (players_ingame[j] === 1) {
+        if (players_ingame[j] && !all_in_users[i]) {
             actions.push(j)
         }
     }
@@ -175,6 +419,7 @@ function setupFirstRound() {
     //shuffles the deck and increments the button
     house_chips = 0
     shuffled_deck = deck.shuffleDeck(unshuffled_deck)
+    setHighestBet(20)
     incrementButton()
 
     //clears the board
@@ -183,11 +428,17 @@ function setupFirstRound() {
     //resets sorted array of winning hands
     sorted_winners.length = 0
 
+    //resets side pots
+    side_pots.length = 0
+
     //initializes current_player objects
     deck.initializePlayers(playing_users, current_players)
 
     //initializes array of players_ingame to 1 (in game)
     players_ingame = Array(playing_users.length).fill(1)
+
+    //initializes array of all_in_users to 0 (not currently all-in)
+    all_in_users = Array(playing_users.length).fill(0)
 
     //resets the chip values for each player
     resetChips()
@@ -214,7 +465,12 @@ function setupFirstRound() {
 }
 
 function setupNextRound() {
-    submitChips()
+    if (all_ins.length > 0) {
+        calculateSidePots()
+    }
+    else {
+        submitChips()
+    }
 
     switch(current_board.length) {
         case 0:
@@ -229,20 +485,7 @@ function setupNextRound() {
             current_board.push(board[4])
             break;
         case 5:
-            const winner = sorted_winners[0]
-            if (Array.isArray(winner)) {
-                house_chips = Math.floor(house_chips/winner.length)
-                for (let curr_winner of winner) {
-                    userRepo.getByUsername(curr_winner) 
-                        .then((retrievedUser) => {
-                            let new_useable = retrievedUser.chips_useable + house_chips
-                            userRepo.updateChipsUseable(new_useable, curr_winner)
-                        })
-                        .catch((err) => {
-                            console.log("Error: User is not here to receive prize.")
-                        })
-                }
-            }
+            calculateWinnings()
 
             //if users want to continue the game
             if (ready_users.length !== playing_users.length) {
@@ -250,9 +493,28 @@ function setupNextRound() {
             }
     }
 
+    wss.clients.forEach(function each(client) {
+        client.send(JSON.stringify({event: "update_board"}))
+    })
+
     if (current_board.length !== 5) {
+        setHighestBet(0)
         buildActionsArray(-1, 0)
     }
+}
+
+function arrayIsEqual(arr1, arr2) {
+    if (arr1.length !== arr2.length) {
+        return false;
+    }
+
+    for (let i = 0; i < arr1.length; i++) {
+        if (arr1[i] !== arr2[i]) {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 
@@ -586,7 +848,6 @@ app.post("/players", cors(), (req, res) => {
             if (player_index > -1) {
                 //if player is in game, otherwise he is not shown cards. Might be subject to change.
                 if (shown_playing_cards[player_index][0] === 'Back') {
-                    console.log(Array.from(shown_cards[player_index]))
                     shown_playing_cards[player_index] = Array.from(shown_cards[player_index])
                 }
                 res.status(201).json({players: [...playing_users], cards: [...shown_playing_cards]})
@@ -629,7 +890,7 @@ app.post("/toggle_game", cors(), (req, res) => {
                     console.log("Game is starting!")
                     //build pre-flop actions array, parameters: no previous action, no is_raise
                     setTimeout(setupFirstRound, 500)
-                    setTimeout(sendNextTurn, 1000)
+                    setTimeout(sendNextTurn, 500)
                 } 
             }
 
@@ -651,9 +912,19 @@ app.post("/raise", cors(), (req, res) => {
         .then((retrievedUser) => {
             //only accept request from player who's turn it is, else send a message saying it's not your turn
             if (retrievedUser.username === playing_users[current_turn]) {
-                highest_bet = user_request.amount
-                const new_useable = retrievedUser.chips_useable - (user_request.amount - table_chips[current_turn])
-                table_chips[current_turn] = user_request.amount
+                //all-in
+                if (user_request.amount >= (retrievedUser.chips_useable + table_chips[current_turn])) {
+                    highest_bet = retrievedUser.chips_useable + table_chips[current_turn]
+                    table_chips[current_turn] = highest_bet
+                    all_ins.push({bet_size: table_chips[current_turn], player_index: current_turn})
+                    all_in_users[current_turn] = 1
+                }
+                //normal raise
+                else {
+                    highest_bet = user_request.amount
+                    table_chips[current_turn] = highest_bet
+                }
+                const new_useable = retrievedUser.chips_useable - (highest_bet - table_chips[current_turn])
                 playing_chips[current_turn] = new_useable
                 userRepo.updateChipsUseable(new_useable, retrievedUser.username)
                 res.status(201).json({message: "You have raised."})
@@ -661,7 +932,7 @@ app.post("/raise", cors(), (req, res) => {
                 //user raised, therefore actions array must be refashioned around the current user
                 buildActionsArray(current_turn, 1)
 
-                setTimeout(sendNextTurn, 1000)
+                setTimeout(sendNextTurn, 500)
             }
             else {
                 res.status(200).json({message: "It is currently not your turn."})
@@ -681,22 +952,28 @@ app.post("/call", cors(), (req, res) => {
         .then((retrievedUser) => {
             //only accept request from player who's turn it is, else send a message saying it's not your turn
             if (retrievedUser.username === playing_users[current_turn]) {
-                const new_useable = retrievedUser.chips_useable - (highest_bet - table_chips[current_turn])
-                table_chips[current_turn] = highest_bet
+                //regular call
+                if (retrievedUser.chips_useable >= (highest_bet - table_chips[current_turn])) {
+                    const new_useable = retrievedUser.chips_useable - (highest_bet - table_chips[current_turn])
+                    table_chips[current_turn] = highest_bet
+                }
+                //all-in call
+                else {
+                    const new_useable = 0
+                    table_chips[current_turn] += retrievedUser.chips_useable
+                    all_ins.push({bet_size: table_chips[current_turn], player_index: current_turn})
+                    all_in_users[current_turn] = 1
+                }
+                
                 playing_chips[current_turn] = new_useable
                 userRepo.updateChipsUseable(new_useable, retrievedUser.username)
                 res.status(201).json({message: "You have called."})
 
                 if (actions.length === 0) {
                     setupNextRound()
-
-                    wss.clients.forEach(function each(client) {
-                        client.send(JSON.stringify({event: "update_board"}))
-                    })
                 }
 
-                setTimeout(sendNextTurn, 1000)
-                
+                setTimeout(sendNextTurn, 500)
             }
             else {
                 res.status(200).json({message: "It is currently not your turn."})
@@ -714,17 +991,18 @@ app.post("/check", cors(), (req, res) => {
     userRepo.getByIngameToken(user_request.token)
         .then((retrievedUser) => {
             if (retrievedUser.username === playing_users[current_turn]) {
-                res.status(201).json({message: "You have checked."})
+                if (table_chips[current_turn] === highest_bet) {
+                    res.status(201).json({message: "You have checked."})
 
-                if (actions.length === 0) {
-                    setupNextRound()
+                    if (actions.length === 0) {
+                        setupNextRound()
+                    }
 
-                    wss.clients.forEach(function each(client) {
-                        client.send(JSON.stringify({event: "update_board"}))
-                    })
+                    setTimeout(sendNextTurn, 500)
                 }
-
-                setTimeout(sendNextTurn, 1000)
+                else {
+                    res.status(200).json({message: "Calling is not a valid action."})
+                }
             }
             else {
                 res.status(200).json({message: "It is currently not your turn."})
@@ -744,33 +1022,31 @@ app.post("/fold", cors(), (req, res) => {
         .then((retrievedUser) => {
             //only accept request from player who's turn it is, else send a message saying it's not your turn
             if (retrievedUser.username === playing_users[current_turn]) {
-                house_chips += table_chips[current_turn]
-                table_chips[current_turn] = 0
                 players_ingame[current_turn] = 0
                 deck.userFolds(retrievedUser.username, sorted_winners)
+
+                //remove user that folded from all relevant side pots
+                if (side_pots.length > 0) {
+                    side_pots.forEach((element, index) => {
+                        let side_pot_index = element.participants.indexOf(retrievedUser.username)
+                        if (side_pot_index > -1) {
+                            side_pots[index].participants.splice(side_pot_index, 1)
+                        }
+                    })
+                }
+
                 res.status(201).json({message: "You have folded."})
 
                 //winner is decided, only 1 player is left
                 if ([players_ingame.reduce((a, b) => a + b, 0)] === 1) {
-                    let winner_index = players_ingame.indexOf(1)
-                    userRepo.getByUsername(playing_users[winner_index])
-                        .then((retrievedUser) => {
-                            let new_useable = retrievedUser.chips_useable + house_chips
-                            userRepo.updateChipsUseable(new_useable, retrievedUser.username)
-                            house_chips = 0
-                            console.log("Winner found through folding.")
-                            setupFirstRound()
-                        })
+                    calculateWinnings()
+                    setupFirstRound()
                 }
                 else if (actions.length === 0) {
                     setupNextRound()
-
-                    wss.clients.forEach(function each(client) {
-                        client.send(JSON.stringify({event: "update_board"}))
-                    })
                 }
 
-                setTimeout(sendNextTurn, 1000)
+                setTimeout(sendNextTurn, 500)
             }
             else {
                 res.status(200).json({message: "It is currently not your turn."})
@@ -778,59 +1054,6 @@ app.post("/fold", cors(), (req, res) => {
         })
         .catch((err) => {
             res.status(200).json({message: "User is not in the database."})
-        })
-})
-
-app.post("/default_action", cors(), (req, res) => {
-    //login-token, might be changed for ingame-token later
-    const user_request = {token: req.body.token}
-
-    userRepo.getByLoginToken(user_request.token)
-        .then((retrievedUser) => {
-            if (retrievedUser.username === playing_users[current_turn]) {
-                //user checks
-                if (table_chips[current_turn] === highest_bet) {
-                    res.status(201).json({message: "You have checked."})
-
-                    if (actions.length === 0) {
-                        setupNextRound()
-
-                        wss.clients.forEach(function each(client) {
-                            client.send(JSON.stringify({event: "update_board"}))
-                        })
-                    }
-                }
-                //user folds
-                else {
-                    house_chips += table_chips[current_turn]
-                    table_chips[current_turn] = 0
-                    players_ingame[current_turn] = 0
-                    deck.userFolds(retrievedUser.username, sorted_winners)
-                    res.status(201).json({message: "You have folded."})
-    
-                    //winner is decided, only 1 player is left
-                    if ([players_ingame.reduce((a, b) => a + b, 0)] === 1) {
-                        let winner_index = players_ingame.indexOf(1)
-                        userRepo.getByUsername(playing_users[winner_index])
-                            .then((retrievedUser) => {
-                                let new_useable = retrievedUser.chips_useable + house_chips
-                                userRepo.updateChipsUseable(new_useable, retrievedUser.username)
-                                house_chips = 0
-                                console.log("Winner found through folding.")
-                                setupFirstRound()
-                            })
-                    }
-                    else if (actions.length === 0) {
-                        setupNextRound()
-    
-                        wss.clients.forEach(function each(client) {
-                            client.send(JSON.stringify({event: "update_board"}))
-                        })
-                    }
-                }
-
-                setTimeout(sendNextTurn, 1000)
-            }
         })
 })
 
@@ -871,10 +1094,20 @@ app.get("/board_state", (req, res) => {
     res.json({first: first, second: second, third: third, fourth: fourth, fifth: fifth});
 });
 
+app.get("/pot", (req, res) => {
+    let total_pot = house_chips
+    if (side_pots.length > 0) {
+        for (let temp_pot of side_pots) {
+            total_pot += temp_pot.pot_size;
+        }
+    }
+
+    res.json({pot: total_pot});
+})
+
 app.get('*', (req, res) => {
     res.sendFile(path.resolve(__dirname, '../client/public', 'index.html'));
 });
-
 
 app.use(express.static(path.resolve(__dirname, '../client/public')));
 app.use(express.static('public'));

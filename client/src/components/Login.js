@@ -30,21 +30,19 @@ function Login({ setLoginToken }) {
 
   return (
     <div>
-      <div>
-        <button className="login-button" onClick={openForm}>Login</button>
-        <div style={{ visibility : (show === '1') ? "visible" : "hidden" }} className="login-popup" id="myLogin">
-          <form onSubmit={handleSubmit(onSubmit)} className="form-container">
-            <h1>Login</h1>
-            <label htmlFor="username"><b>Username</b></label>
-            <input type="text" placeholder="Enter Username" name="username" {...register("username")} maxLength={12} required/>
+      <button className="login-button" onClick={openForm}>Login</button>
+      <div style={{ visibility : (show === '1') ? "visible" : "hidden" }} className="login-popup" id="myLogin">
+        <form onSubmit={handleSubmit(onSubmit)} className="form-container">
+          <h1>Login</h1>
+          <label htmlFor="username"><b>Username</b></label>
+          <input type="text" placeholder="Enter Username" name="username" {...register("username")} maxLength={12} required/>
 
-            <label htmlFor="password"><b>Password</b></label>
-            <input type="password" placeholder="Enter Password" name="password" {...register("password")} maxLength={20} required/>
+          <label htmlFor="password"><b>Password</b></label>
+          <input type="password" placeholder="Enter Password" name="password" {...register("password")} maxLength={20} required/>
 
-            <button type="submit" className="btn">Login</button>
-            <button type="button" className="btn cancel" onClick={closeForm}>Close</button>
-          </form>
-        </div>
+          <button type="submit" className="btn">Login</button>
+          <button type="button" className="btn cancel" onClick={closeForm}>Close</button>
+        </form>
       </div>
     </div>
   );
