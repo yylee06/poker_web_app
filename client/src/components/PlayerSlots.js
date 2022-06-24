@@ -76,7 +76,6 @@ function PlayerSlots({ socket, setIngameToken }) {
             switch(received_message.event) {
                 case "player":
                     callbackPlayerState();
-                    callbackPlayerChipsState();
                     break;
                 case "first_turn":
                     callbackPlayerState();
@@ -84,6 +83,9 @@ function PlayerSlots({ socket, setIngameToken }) {
                     break;
                 case "next_turn":
                     callbackPlayerChipsState();
+                    break;
+                case "showdown":
+                    callbackPlayerState();
                     break;
                 default:
             }

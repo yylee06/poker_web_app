@@ -15,7 +15,7 @@ function JoinGame({ setGameToken }) {
           alert('You will join the game starting from the next round.');
         }
         else if (retrievedMessage.auth === 2) {
-          alert('You have no available chips on hand.');
+          alert('You do not have enough chips on hand to join. (Minimum chips required to enter: 100)');
         }
         else {
           alert(retrievedMessage.message);

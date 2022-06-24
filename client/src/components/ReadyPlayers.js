@@ -18,12 +18,17 @@ function ReadyPlayers({ socket, ingameToken }) {
         getReadyPlayersState()
     }, [])
 
+    //renders the ready-players component if it exists on first render
+    useEffect(() => {
+        callbackReadyPlayersState()
+    }, [callbackReadyPlayersState]);
+
     useEffect(() => {
         console.log("Ready players event listeners added!")
     
         function handleReadyPlayers(event) {
             const received_message = JSON.parse(event.data)
-            if (received_message.event === "start/stop") {
+            if (received_message.event === "start/stop" || received_message.event === "player") {
                 callbackReadyPlayersState()
             }
         }

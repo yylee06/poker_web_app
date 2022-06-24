@@ -2,7 +2,6 @@ import './Actions.css'
 import { useState, useEffect } from 'react'
 import { useForm } from "react-hook-form"
 
-//passed variable isTurn === 1 if it is current player's turn, 0 otherwise
 function Actions({ socket }) {
     const { register, handleSubmit, getValues } = useForm();
     const [showRaiseForm, setShowRaiseForm] = useState(0);

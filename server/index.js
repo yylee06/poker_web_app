@@ -9,6 +9,8 @@ const bodyParser = require('body-parser');
 const Deck = require('./deck');
 //allotted_time for timer, can be changed at will
 const ALLOTTED_TIME = 31
+const SMALL_BLIND = 10
+const BIG_BLIND = 20
 
 //sets up cors to accept requests from http://localhost:3000 only
 var corsOptions = {
@@ -26,22 +28,50 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(bodyParser.text());
 
+class Clients {
+    constructor() {
+        this.clientList = {};
+        this.saveClient = this.saveClient.bind(this)
+    }
+
+    saveClient(loginToken, client) {
+        this.clientList[loginToken] = client
+    }
+}
+
 const server = require('http').createServer(app);
-const WebSocketServer = require('ws').Server
+const WebSocket = require('ws')
+const WebSocketServer = WebSocket.Server
+const clients = new Clients()
 const wss = new WebSocketServer({ server });
 
-wss.on('connection', function connection(ws) {
+
+wss.on('connection', function connection(client) {
+    client.isAlive = true;  
     console.log("New Client has joined.")
-    ws.send(JSON.stringify({event:'Welcome new client!'}))
-    ws.on('message', function incoming(message) {
-        console.log("Received Message: " + message);
-        ws.send('Got your message!')
+    client.send(JSON.stringify({event:'Welcome new client!'}))
+
+    client.on('message', (event) => {
+        const received_message = JSON.parse(event)
+
+        if (received_message.event === "ws_auth") {
+            userRepo.getByLoginToken(received_message.token)
+            .then((retrievedUser) => {
+                clients.saveClient(retrievedUser.username, client)
+                client.send(JSON.stringify({event:'Got your message!'}))
+            })
+            .catch((err) => {
+                console.log(err)
+            })
+        }
+        else if (received_message.event === "pong") {
+            client.isAlive = true;
+        }
     })
 });
 
 //----connects to database----//
 const dao = new AppDAO('./server/users.sqlite3')
-const blogUserData = { username: 'ylee', password: 'dogwater' }
 const userRepo = new UserRepository(dao)
 //----------------------------//
 
@@ -51,8 +81,10 @@ let playing_users = [];
 let table_chips = [];
 //array of playing chips used by each user (should fit to size of current_players each round)
 let playing_chips = [];
-//copy of cards held by players to be shown to client through JSON
+//copy of cards held by players to be changed to formatted_cards
 let shown_cards = [];
+//template of cards shown to clients (card values hidden except those held by given user)
+let formatted_cards = [];
 //array of users ready to start/end the game
 let ready_users = [];
 //object of class Deck, used for playing the game
@@ -88,9 +120,37 @@ let all_ins = [];
 let side_pots = [];
 //index of the player holding the button, incremented by 1 each game, modulus playing_users
 let button_index = -1;
+//boolean value true when game is running, false otherwise
+let game_running = false;
+//array of users in queue to leave the game (flushed at the start of every new game)
+let leaving_users = [];
 //working timer object, holds turn timer and current player (in case player exits browser)
 //timer set to -1 initially to not trigger default action, used for server-side turn detection
 let working_timer = {timer: -1, current_actor: ''}
+
+//pings each websocket connection every 30 sec, updates Clients class respectively, used for garbage cleanup
+setInterval(() => {
+    for (let key in clients.clientList) {
+        if (clients.clientList[key].isAlive === false) {
+            let player_index = playing_users.indexOf(key)
+            if (player_index > -1) {
+                if (game_running) {
+                    leaving_users.push(player_index)
+                }
+                else {
+                    playing_users.splice(player_index, 1)
+                    playing_chips.splice(player_index, 1)
+                }
+            }
+
+            delete clients.clientList[key]
+        }
+        else {
+            clients.clientList[key].isAlive = false;
+            clients.clientList[key].send(JSON.stringify({event: "ping"}))
+        }
+    }
+}, 30000);
 
 //timer always running, reset to 30 decrementing every turn
 setInterval(() => {
@@ -108,6 +168,67 @@ setInterval(() => {
 function setHighestBet(default_value) {
     highest_bet = default_value
 }
+
+function reorganizePlayers() {
+    //removes all players with less than 20 chips
+    function removeInvalidPlayers() {
+        let invalid_players = []
+        playing_chips.forEach((element, index) => {
+            if (element < BIG_BLIND) {
+                invalid_players.push(index)
+            }
+        });
+
+        //reverse to remove all players in 1 pass of playing_users and playing_chips
+        invalid_players.reverse()
+
+        for (let invalid_player of invalid_players) {
+            playing_users.splice(invalid_player, 1)
+            playing_chips.splice(invalid_player, 1)
+        }
+    }
+
+    //removes all players that wish to leave
+    function removeLeavingPlayers() {
+        if (leaving_users.length > 0) {
+            //sort for 1-pass popping from playing_users and playing_chips
+            leaving_users.sort()
+
+            while (leaving_users.length > 0) {
+                let leaving_user_index = leaving_users.pop()
+                playing_users.splice(leaving_user_index, 1)
+                playing_chips.splice(leaving_user_index, 1)
+            }
+        }
+    }
+
+    //flush out leaving players first because leaving_users are globally indexed
+    removeLeavingPlayers()
+    removeInvalidPlayers()
+}
+
+//function to send to client what cards are shown, if game comes to showdown, all cards are shown
+function showFormattedCards(isShowdown) {
+    formatted_cards.length = 0
+
+    for (let i = 0; i < playing_users.length; i++) {
+        if (players_ingame[i] === 1 && isShowdown) {
+            formatted_cards.push(Array.from(shown_cards[i]))
+        }
+        else if (players_ingame[i] === 1) {
+            formatted_cards.push(['Back', 'Back'])
+        }
+        else {
+            formatted_cards.push(['EmptyPlayer', 'EmptyPlayer'])
+        }
+    }
+}
+
+//function to replace formatted cards at given index to show that user has folded to other clients
+function foldFormattedCards(player_index) {
+    formatted_cards[player_index] = (['EmptyPlayer', 'EmptyPlayer'])
+}
+
 
 //function called at end of round if any user calls all-in in given round
 function calculateSidePots() {
@@ -200,9 +321,13 @@ function calculateSidePots() {
 //called at end of each game to calculate and distribute main and side pots
 function calculateWinnings() {
     function distributeWinnings(winner, earnings) {
+        //index of winner in playing_users array
+        let winner_index = playing_users.indexOf(winner)
+
         userRepo.getByUsername(winner)
             .then((retrievedUser) => {
                 let new_useable = retrievedUser.chips_useable + earnings
+                playing_chips[winner_index] = new_useable
                 userRepo.updateChipsUseable(new_useable, winner)
             })
             .catch((err) => {
@@ -222,8 +347,7 @@ function calculateWinnings() {
     }
     //if there is a single winner
     else {
-        distributeWinnings(winner, house_chips)
-                    
+        distributeWinnings(winner, house_chips)               
     }
 
     //calculate side pots
@@ -260,6 +384,9 @@ function calculateWinnings() {
             distributeWinnings(curr_winner, side_pot_earnings)
         }
     }
+
+    //kick out any players under 20 chips
+    reorganizePlayers()
 }
 
 //performs the default action (check or fold) due to time running out
@@ -270,6 +397,7 @@ function defaultAction(username) {
         //user folds
         players_ingame[current_turn] = 0
         deck.userFolds(username, sorted_winners)
+        foldFormattedCards(current_turn)
 
         //remove user that folded from all relevant side pots
         if (side_pots.length > 0) {
@@ -282,9 +410,9 @@ function defaultAction(username) {
         }
 
         //winner is decided, only 1 player is left
-        if ([players_ingame.reduce((a, b) => a + b, 0)] === 1) {
+        if (players_ingame.reduce((a, b) => a + b, 0) === 1) {
             calculateWinnings()
-            setupFirstRound()
+            setTimeout(setupFirstRound, 500)
         }
         else if (actions.length === 0) {
             setupNextRound()
@@ -297,7 +425,7 @@ function defaultAction(username) {
         }
     }
 
-    setTimeout(sendNextTurn, 500)
+    setTimeout(sendNextTurn, 1000)
 }
 
 function resetTimer(current_actor) {
@@ -345,24 +473,28 @@ function setBlinds() {
 
     userRepo.getByUsername(playing_users[small_blind_index])
         .then((retrievedUser) => {
-            let new_useable = retrievedUser.chips_useable - 10
+            let new_useable = retrievedUser.chips_useable - SMALL_BLIND
+            playing_chips[small_blind_index] -= SMALL_BLIND
             userRepo.updateChipsUseable(new_useable, retrievedUser.username)
         })
         .catch((err) => {
+            console.log(err)
             console.log("Error: User does not have enough chips for the blind.")
         })
 
     userRepo.getByUsername(playing_users[big_blind_index])
         .then((retrievedUser) => {
-            let new_useable = retrievedUser.chips_useable - 20
+            let new_useable = retrievedUser.chips_useable - BIG_BLIND
+            playing_chips[big_blind_index] -= BIG_BLIND
             userRepo.updateChipsUseable(new_useable, retrievedUser.username)
         })
         .catch((err) => {
+            console.log(err)
             console.log("Error: User does not have enough chips for the blind.")
         })
 
-    table_chips[small_blind_index] = 10
-    table_chips[big_blind_index] = 20
+    table_chips[small_blind_index] = SMALL_BLIND
+    table_chips[big_blind_index] = BIG_BLIND
 }
 
 //submits all the chips to the main or side pot, and then resets chip values of each player for the next round
@@ -381,7 +513,7 @@ function submitChips() {
 }
 
 //initializes array of shown_cards from current_players.cards to be sent through JSON to client
-function formatCards() {
+function indexCards() {
     shown_cards.length = 0
 
     for (let current_player of current_players) {
@@ -407,7 +539,7 @@ function buildActionsArray(last_action, is_raise) {
     }
 
     for (let j = 0; j < first_actor; j++) {
-        if (players_ingame[j] && !all_in_users[i]) {
+        if (players_ingame[j] && !all_in_users[j]) {
             actions.push(j)
         }
     }
@@ -416,6 +548,9 @@ function buildActionsArray(last_action, is_raise) {
 }
 
 function setupFirstRound() {
+    //toggle game_running boolean value
+    game_running = true
+
     //shuffles the deck and increments the button
     house_chips = 0
     shuffled_deck = deck.shuffleDeck(unshuffled_deck)
@@ -424,9 +559,6 @@ function setupFirstRound() {
 
     //clears the board
     current_board.length = 0
-
-    //resets sorted array of winning hands
-    sorted_winners.length = 0
 
     //resets side pots
     side_pots.length = 0
@@ -449,8 +581,8 @@ function setupFirstRound() {
     deck.multiHandChecker(board, current_players)
     sorted_winners = deck.multiHandSorter(current_players)
 
-    //formats shown_cards array to be sent to client
-    formatCards()
+    //indexes shown_cards array to be formatted and then sent to client
+    indexCards()
 
     //sets blinds 
     setBlinds()
@@ -477,30 +609,42 @@ function setupNextRound() {
             for (let i = 0; i < 3; i++) {
                 current_board.push(board[i])
             }
+            setHighestBet(0)
+            buildActionsArray(-1, 0)
             break;
         case 3:
             current_board.push(board[3])
+            setHighestBet(0)
+            buildActionsArray(-1, 0)
             break;
         case 4:
             current_board.push(board[4])
+            setHighestBet(0)
+            buildActionsArray(-1, 0)
             break;
         case 5:
-            calculateWinnings()
+            //update formatted cards to show all valid cards for showdown
+            showFormattedCards(true)
 
-            //if users want to continue the game
-            if (ready_users.length !== playing_users.length) {
-                setupFirstRound() 
-            }
+            setTimeout(() => {
+                wss.clients.forEach(function each(client) {
+                    client.send(JSON.stringify({event: "showdown"}))
+                })
+                calculateWinnings()
+
+                //if users want to continue the game
+                if (ready_users.length !== playing_users.length) {   
+                    setTimeout(setupFirstRound, 500)
+                }
+                else {
+                    game_running = false
+                }
+            }, 500)
     }
 
     wss.clients.forEach(function each(client) {
         client.send(JSON.stringify({event: "update_board"}))
     })
-
-    if (current_board.length !== 5) {
-        setHighestBet(0)
-        buildActionsArray(-1, 0)
-    }
 }
 
 function arrayIsEqual(arr1, arr2) {
@@ -754,10 +898,10 @@ app.post("/join_game", cors(), (req, res) => {
             if (playing_users.length === 10) {
                 res.status(200).json({message: `Error: Game is currently full.`, auth: 0})
             }
-            else if (retrievedUser.chips_useable === 0) {
+            else if (retrievedUser.chips_useable <= 100) {
                 res.status(200).json({message: `Error: User does not have enough chips on hand.`, auth: 2})
             }
-            else if (player_index <= -1) {
+            else if (player_index === -1) {
                 playing_users.push(retrievedUser.username)
                 playing_chips.push(retrievedUser.chips_useable)
                 wss.clients.forEach(function each(client) {
@@ -785,12 +929,17 @@ app.post("/exit_game", cors(), (req, res) => {
         .then((retrievedUser) => {
             let player_index = playing_users.indexOf(retrievedUser.username)
             if (player_index > -1) {
-                playing_users.splice(player_index, 1)
-                playing_chips.splice(player_index, 1)
-                wss.clients.forEach(function each(client) {
-                    client.send(JSON.stringify({event: "player"}))
-                })
-                res.status(201).json({message: "user has left the game.", auth: 1})
+                if (game_running) {
+                    leaving_users.push(player_index)
+                }
+                else {
+                    playing_users.splice(player_index, 1)
+                    playing_chips.splice(player_index, 1)
+                    wss.clients.forEach(function each(client) {
+                        client.send(JSON.stringify({event: "player"}))
+                    })
+                    res.status(201).json({message: "user has left the game.", auth: 1})
+                }
             }
             else {
                 res.status(200).json({message: "Fatal error: User is not currently in the game to leave.", auth: 0})
@@ -832,32 +981,33 @@ app.post("/player_index", cors(), (req, res) => {
 app.post("/players", cors(), (req, res) => {
     //login-token
     const user_request = {token: req.body.token}
-    let shown_playing_cards = []
-    for (let i = 0; i < playing_users.length; i++) {
-        if (players_ingame[i] === 1) {
-            shown_playing_cards.push(['Back', 'Back'])
-        }
-        else {
-            shown_playing_cards.push(['EmptyPlayer', 'EmptyPlayer'])
+    let temp_formatted_cards = []
+    
+    if (game_running) {
+        temp_formatted_cards = formatted_cards.map((arr) => {
+            return arr.slice()
+        })
+    }
+    else {
+        for (let i = 0; i < playing_users.length; i++) {
+            temp_formatted_cards.push(['EmptyPlayer', 'EmptyPlayer'])
         }
     }
+    
 
     userRepo.getByLoginToken(user_request.token)
         .then((retrievedUser) => {
             let player_index = playing_users.indexOf(retrievedUser.username)
             if (player_index > -1) {
                 //if player is in game, otherwise he is not shown cards. Might be subject to change.
-                if (shown_playing_cards[player_index][0] === 'Back') {
-                    shown_playing_cards[player_index] = Array.from(shown_cards[player_index])
+                if (temp_formatted_cards[player_index][0] === 'Back') {
+                    temp_formatted_cards[player_index] = Array.from(shown_cards[player_index])
                 }
-                res.status(201).json({players: [...playing_users], cards: [...shown_playing_cards]})
             }
-            else {
-                res.status(201).json({players: [...playing_users], cards: [...shown_playing_cards]})
-            }
+            res.status(201).json({players: [...playing_users], cards: [...temp_formatted_cards]})
         })
         .catch((err) => {
-            res.status(201).json({players: [...playing_users], cards: [...shown_playing_cards]})
+            res.status(201).json({players: [...playing_users], cards: [...temp_formatted_cards]})
         })
 })
 
@@ -890,7 +1040,7 @@ app.post("/toggle_game", cors(), (req, res) => {
                     console.log("Game is starting!")
                     //build pre-flop actions array, parameters: no previous action, no is_raise
                     setTimeout(setupFirstRound, 500)
-                    setTimeout(sendNextTurn, 500)
+                    setTimeout(sendNextTurn, 1000)
                 } 
             }
 
@@ -939,6 +1089,7 @@ app.post("/raise", cors(), (req, res) => {
             }
         })
         .catch((err) => {
+            console.log(err)
             res.status(200).json({message: "User is not in the database."})
         })
 
@@ -953,13 +1104,14 @@ app.post("/call", cors(), (req, res) => {
             //only accept request from player who's turn it is, else send a message saying it's not your turn
             if (retrievedUser.username === playing_users[current_turn]) {
                 //regular call
+                let new_useable = 0
+
                 if (retrievedUser.chips_useable >= (highest_bet - table_chips[current_turn])) {
-                    const new_useable = retrievedUser.chips_useable - (highest_bet - table_chips[current_turn])
+                    new_useable = retrievedUser.chips_useable - (highest_bet - table_chips[current_turn])
                     table_chips[current_turn] = highest_bet
                 }
                 //all-in call
                 else {
-                    const new_useable = 0
                     table_chips[current_turn] += retrievedUser.chips_useable
                     all_ins.push({bet_size: table_chips[current_turn], player_index: current_turn})
                     all_in_users[current_turn] = 1
@@ -980,6 +1132,7 @@ app.post("/call", cors(), (req, res) => {
             }
         })
         .catch((err) => {
+            console.log(err)
             res.status(200).json({message: "User is not in the database."})
         })
 })
@@ -1010,7 +1163,8 @@ app.post("/check", cors(), (req, res) => {
 
         })
         .catch((err) => {
-            res.status(200).json({message: "Error!"})
+            console.log(err)
+            res.status(200).json({message: "User is not in the database."})
         })
 })
 
@@ -1024,6 +1178,7 @@ app.post("/fold", cors(), (req, res) => {
             if (retrievedUser.username === playing_users[current_turn]) {
                 players_ingame[current_turn] = 0
                 deck.userFolds(retrievedUser.username, sorted_winners)
+                foldFormattedCards(current_turn)
 
                 //remove user that folded from all relevant side pots
                 if (side_pots.length > 0) {
@@ -1038,7 +1193,7 @@ app.post("/fold", cors(), (req, res) => {
                 res.status(201).json({message: "You have folded."})
 
                 //winner is decided, only 1 player is left
-                if ([players_ingame.reduce((a, b) => a + b, 0)] === 1) {
+                if (players_ingame.reduce((a, b) => a + b, 0) === 1) {
                     calculateWinnings()
                     setupFirstRound()
                 }
@@ -1046,13 +1201,14 @@ app.post("/fold", cors(), (req, res) => {
                     setupNextRound()
                 }
 
-                setTimeout(sendNextTurn, 500)
+                setTimeout(sendNextTurn, 1000)
             }
             else {
                 res.status(200).json({message: "It is currently not your turn."})
             }
         })
         .catch((err) => {
+            console.log(err)
             res.status(200).json({message: "User is not in the database."})
         })
 })

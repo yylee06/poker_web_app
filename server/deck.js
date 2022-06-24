@@ -395,19 +395,19 @@ class Deck {
         }
         
         //array of usernames based on sorted_players, including nested arrays for ties
-        let sorted_names = [sorted_players[0].user]
+        let sorted_names = [sorted_players[0].username]
 
         for (let i = 1; i < sorted_players.length; i++) {
             if (sorted_players[i].hand_strength === sorted_players[i-1].hand_strength && sorted_players[i].high_rank === sorted_players[i-1].high_rank) {
                 if (Array.isArray(sorted_names[sorted_names.length - 1])) {
-                    sorted_names[sorted_names.length - 1].push(sorted_players[i].user)
+                    sorted_names[sorted_names.length - 1].push(sorted_players[i].username)
                 }
                 else {
-                    sorted_names[sorted_names.length - 1] = [sorted_names[sorted_names.length - 1], sorted_players[i].user]
+                    sorted_names[sorted_names.length - 1] = [sorted_names[sorted_names.length - 1], sorted_players[i].username]
                 }
             }
             else {
-                sorted_names.push(sorted_players[i].user)
+                sorted_names.push(sorted_players[i].username)
             }
         }
 

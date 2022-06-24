@@ -4,26 +4,16 @@ Short Term:
         -LoginToken
         -InGameToken
     Change tokens to strings, rather than objects, specifically to fix redundancy in retrieving ingame-token
-    
-    -Figure out why timer can't find correct turn sometimes to position itself.
-    Add ingame-token to app instead of component.js, use token for start/stop game and actions.js
-    at the end of each game, clear the playing_users array of users that have left. Keep their values in until the end of the game.
-        -make map or array of clients on the server, ping users to get their usernames if not in table, when logging in on the client, it should send the websocket the username or login token.
-        -ping all clients at a certain point every game, if no pong from client, remove from playing_users
-        -user is not taken out of players_ingame array if they are all-in (i.e. game continues until end)
-    add checking API
+
     When game starts or ends, remember to clear the ready_players array, because we are reusing for starting and stopping.
     Make a waiting queue for the game, queue members can enter game after end of each round, or if game has not started yet
     Build stop game API
-    Add cleanup for when socket connection closes (remove player from all arrays in server, wipe local storage)
     Logout while in game should take a player out of the game, when the round is finished.
-    Add confirmation page before closing out of window on client side (before unload event listener)
-    Remove ingame-token when logging out, closing browser, leaving game
+
     authenticate all tokens when using, likely do it in components.js
     Find out what happens when a token is manually deleted client side, and how this affects the server. 
     add feature to kick player out of table when they have less than 20 chips
     send websocket message so that all clients know when one user folds (for visual effect)
-    add way to show cards during showdown
     see how often playerslots re-renders during a game, big chance for optimization here through memoization
     show all cards if all but 1 player is all in, or if all players are all-in
 

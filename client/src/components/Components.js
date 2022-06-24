@@ -30,13 +30,31 @@ function Components() {
       console.log("Connection closed.")
     }
 
-    //return socket.close()
+    //responds to pings with a pong, used for ws authentication
+    function handlePing(event) {
+      const received_message = JSON.parse(event.data)
+      if (received_message.event === "ping") {
+        console.log("IT'S HAPPENING")
+        socket.send(JSON.stringify({event: "pong"}))
+      }
+    }
+
+    socket.addEventListener('message', handlePing)
+
+    return () => { socket.removeEventListener('message', handlePing) }
+
   }, [socket]);
 
   function onLogout() {
+    //exits game if in game
+    if (gameToken) {
+      onExitGame()
+    }
+
     //removes token and clears session storage, might find less redundant way to do this later
     setLoginToken({})
     setGameToken({})
+    setIngameToken({})
     sessionStorage.clear()
   }
 
@@ -50,13 +68,30 @@ function Components() {
       .then((retrievedMessage) => {
         if (retrievedMessage.auth === 1) {
           setGameToken({})
+          setIngameToken({})
           sessionStorage.removeItem("game-token")
-          alert("You have left the game.")
+          sessionStorage.removeItem("ingame-token")
+          if (ingameToken) {
+            alert("You have left the game, and will by default check until folding. You may rejoin to resume your turn manually if time permits.")
+          }
+          else {
+            alert("You have left the game.")
+          }
         }
         else {
           alert('You cannot currently exit the game.');
         }
     })
+  }
+
+  //sends login token to server to be added to working database
+  if (loginToken) {
+    socket.send(JSON.stringify({event: "ws_auth", token: loginToken}))
+  }
+  //only used in-case client manually removes login-token from session storage but not game tokens
+  else if (gameToken || ingameToken) {
+    setGameToken({})
+    setIngameToken({})
   }
 
   if (!loginToken) {

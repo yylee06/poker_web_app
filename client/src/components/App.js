@@ -18,6 +18,7 @@ function App({ socket, ingameToken, setIngameToken }) {
       <header className="App-header">
         <PlayerSlots socket={socket} setIngameToken={setIngameToken} />
         <TableChips socket={socket} />
+        <Timer socket={socket} />
         <div className="poker-table-container">
           <Pot socket={socket} />
           <img src={table} className="poker-table" alt="" />

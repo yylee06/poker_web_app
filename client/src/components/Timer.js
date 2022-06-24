@@ -7,7 +7,6 @@ function Timer({ socket }) {
     const [timer, setTimer] = useState(0)
     const [turn, setTurn] = useState(-1)
     const proxy_timer = useRef(0)
-    console.log(turn)
 
     useEffect(() => {
         console.log("Timer turn event listeners added!")
@@ -15,6 +14,7 @@ function Timer({ socket }) {
         function handleTurn(event) {
             const received_message = JSON.parse(event.data)
             if (received_message.event === "next_turn") {
+                console.log(received_message)
                 setTurn(received_message.turn)
             }
             else if (received_message.event === "update_board") {
