@@ -5,10 +5,11 @@ import Withdraw from './Withdraw';
 import Deposit from './Deposit';
 import JoinGame from './JoinGame';
 import App from './App';
-import useLoginToken from './UseLoginToken';
-import useGameToken from './UseGameToken';
-import useIngameToken from './UseIngameToken';
+import useLoginToken from './useLoginToken';
+import useGameToken from './useGameToken';
+import useIngameToken from './useIngameToken';
 import ReadyPlayers from './ReadyPlayers';
+import tokenAuth from './tokenAuth';
 
 function Components() {
   console.log("Rendering Component!")
@@ -16,6 +17,8 @@ function Components() {
   const { gameToken, setGameToken } = useGameToken();
   const { ingameToken, setIngameToken } = useIngameToken();
 
+
+  //websocket API
   const socket = useMemo(() => {
     return new WebSocket('ws://localhost:3080');
   }, [])
@@ -34,7 +37,6 @@ function Components() {
     function handlePing(event) {
       const received_message = JSON.parse(event.data)
       if (received_message.event === "ping") {
-        console.log("IT'S HAPPENING")
         socket.send(JSON.stringify({event: "pong"}))
       }
     }
@@ -44,6 +46,11 @@ function Components() {
     return () => { socket.removeEventListener('message', handlePing) }
 
   }, [socket]);
+
+  //authenticates all tokens on every token shift
+  useEffect(() => {
+    tokenAuth(socket, loginToken, setLoginToken, gameToken, setGameToken, ingameToken, setIngameToken)
+  }, [socket, loginToken, setLoginToken, gameToken, setGameToken, ingameToken, setIngameToken])
 
   function onLogout() {
     //exits game if in game
@@ -84,21 +91,11 @@ function Components() {
     })
   }
 
-  //sends login token to server to be added to working database
-  if (loginToken) {
-    socket.send(JSON.stringify({event: "ws_auth", token: loginToken}))
-  }
-  //only used in-case client manually removes login-token from session storage but not game tokens
-  else if (gameToken || ingameToken) {
-    setGameToken({})
-    setIngameToken({})
-  }
-
   if (!loginToken) {
     return (
       <div>
         <App socket={socket} ingameToken={ingameToken} setIngameToken={setIngameToken}/>
-        <Login setLoginToken={setLoginToken} />
+        <Login loginToken={loginToken} setLoginToken={setLoginToken} />
         <Register />
       </div>
     )

@@ -61,3 +61,8 @@
     margin-bottom: 0px;
     position: absolute;
 }
+
+.timer_container {
+    bottom: 2px;
+    position: absolute;
+}

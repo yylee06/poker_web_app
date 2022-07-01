@@ -1,24 +1,29 @@
 Short Term: 
-    Add token authentication
-        -GameToken
-        -LoginToken
-        -InGameToken
-    Change tokens to strings, rather than objects, specifically to fix redundancy in retrieving ingame-token
-
     When game starts or ends, remember to clear the ready_players array, because we are reusing for starting and stopping.
-    Make a waiting queue for the game, queue members can enter game after end of each round, or if game has not started yet
     Build stop game API
-    Logout while in game should take a player out of the game, when the round is finished.
+        -StartGame and StopGame might have glow (toggled) if same player starts and stops a game, not sure yet
+        -Remove ingametoken from players
+        -
+    Test stopping the game due to folding (using setupFirstRound)
 
-    authenticate all tokens when using, likely do it in components.js
-    Find out what happens when a token is manually deleted client side, and how this affects the server. 
-    add feature to kick player out of table when they have less than 20 chips
+    
+
+
     send websocket message so that all clients know when one user folds (for visual effect)
     see how often playerslots re-renders during a game, big chance for optimization here through memoization
-    show all cards if all but 1 player is all in, or if all players are all-in
+
+    Use memo in PlayerSlot to not re-render unless props have changed
+
+    Instead of player timer as a number, have it as a progress bar (like a fuse) 
+        -Must be tied to playerslots, but should not re-render playerslots every 
+        x-Implement React.memo to not re-render children when rendering progress bar
 
 Bugs:
-    When user logs out (as opposed to leaving game), likely same with closing browser, and rejoin and log back in, react state updates try to occur but cannot be done.
+    React can't perform state update on an unmounted component, no-op (pot and board upon removing ingametoken)
+    Don't think showdown is working correctly, check this out later.
+    When user has valid game token but spoofs fake login token, user is not removed from game. What is the solution?
+        -Might be fine, as user is still pinged every 30 seconds, else is removed from the match.
+
      
 
 Long Term:
@@ -49,6 +54,7 @@ Ideas:
 11. GET request from users that are in the game but lost to show the winner's cards (only if showdown)
 12. Start game API: toggle button on client if game has not started yet for (start game, with a #/# progress bar), server will have array of users ready, game starts when filled.
 13. Start game API will double as an end game API, therefore will always be loaded
+14. Make a waiting queue for the game, queue members can enter game after end of each round, or if game has not started yet
 
 Poker Rules:
 1. Button is the dealer (randomize this when a game begins), small blind and big blind are the next 2 players going clockwise respectively

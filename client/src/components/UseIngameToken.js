@@ -1,6 +1,6 @@
 import React from 'react';
 
-function UseIngameToken() {
+function useIngameToken() {
     const getIngameToken = () => {
         const tokenString = sessionStorage.getItem('ingame-token')
         const userToken = JSON.parse(tokenString)
@@ -20,4 +20,4 @@ function UseIngameToken() {
     }
 }
 
-export default UseIngameToken;
+export default useIngameToken;

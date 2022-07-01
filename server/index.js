@@ -7,8 +7,8 @@ const UserRepository = require('./user_repository');
 const { resolve } = require('path');
 const bodyParser = require('body-parser');
 const Deck = require('./deck');
-//allotted_time for timer, can be changed at will
-const ALLOTTED_TIME = 31
+//allotted_time for timer, can be changed at will; set to +1 of the client-side timer for latency
+const ALLOTTED_TIME = 26
 const SMALL_BLIND = 10
 const BIG_BLIND = 20
 
@@ -157,7 +157,7 @@ setInterval(() => {
     working_timer.timer -= 1
     console.log(working_timer.timer)
 
-    if (working_timer.timer === 0) {
+    if (working_timer.timer === 0 && game_running) {
         //do default action, because time ran out
         defaultAction(working_timer.current_actor)
     }
@@ -417,15 +417,19 @@ function defaultAction(username) {
         else if (actions.length === 0) {
             setupNextRound()
         }
+        else {
+            setTimeout(sendNextTurn, 500)
+        }
     }
     else {
         //user checks
         if (actions.length === 0) {
             setupNextRound()
         }
+        else {
+            setTimeout(sendNextTurn, 500)
+        }
     }
-
-    setTimeout(sendNextTurn, 1000)
 }
 
 function resetTimer(current_actor) {
@@ -439,6 +443,7 @@ function sendNextTurn() {
     let users_all_in = all_in_users.reduce((a, b) => a + b, 0)
 
     if ((users_ingame - users_all_in) <= 1) {
+        showFormattedCards(true)
         setupNextRound()
         return;
     }
@@ -521,6 +526,7 @@ function indexCards() {
     }
 }
 
+
 //builds the array of actions to be called, takes in current_action (action the last player has taken)
 //is called at beginning of preflop, flop, turn, river, or when a raise is made
 function buildActionsArray(last_action, is_raise) {
@@ -548,6 +554,22 @@ function buildActionsArray(last_action, is_raise) {
 }
 
 function setupFirstRound() {
+    if (ready_users.length === playing_users.length) {
+        game_running = false
+        players_ingame = Array(playing_users.length).fill(0)
+        all_in_users = Array(playing_users.length).fill(0)
+        resetChips()
+        showFormattedCards(false)
+        current_board.length = 0
+        ready_users.length = 0
+
+        wss.clients.forEach(function each(client) {
+            client.send(JSON.stringify({event: "game_over"}))
+        })
+
+        return;
+    }
+
     //toggle game_running boolean value
     game_running = true
 
@@ -584,6 +606,9 @@ function setupFirstRound() {
     //indexes shown_cards array to be formatted and then sent to client
     indexCards()
 
+    //formats cards to be shown to clients (initially set to false == only user's cards are shown)
+    showFormattedCards(false)
+
     //sets blinds 
     setBlinds()
 
@@ -594,6 +619,8 @@ function setupFirstRound() {
 
     //builds array of actions for next round
     buildActionsArray(-1, 0)
+
+    setTimeout(sendNextTurn, 500)
 }
 
 function setupNextRound() {
@@ -611,16 +638,19 @@ function setupNextRound() {
             }
             setHighestBet(0)
             buildActionsArray(-1, 0)
+            setTimeout(sendNextTurn, 500)
             break;
         case 3:
             current_board.push(board[3])
             setHighestBet(0)
             buildActionsArray(-1, 0)
+            setTimeout(sendNextTurn, 500)
             break;
         case 4:
             current_board.push(board[4])
             setHighestBet(0)
             buildActionsArray(-1, 0)
+            setTimeout(sendNextTurn, 500)
             break;
         case 5:
             //update formatted cards to show all valid cards for showdown
@@ -634,12 +664,25 @@ function setupNextRound() {
 
                 //if users want to continue the game
                 if (ready_users.length !== playing_users.length) {   
-                    setTimeout(setupFirstRound, 500)
+                    setTimeout(setupFirstRound, 1000)
                 }
                 else {
-                    game_running = false
+                    setTimeout(() => {
+                        game_running = false
+                        players_ingame = Array(playing_users.length).fill(0)
+                        all_in_users = Array(playing_users.length).fill(0)
+                        resetChips()
+                        showFormattedCards(false)
+                        current_board.length = 0
+                        house_chips = 0
+                        ready_users.length = 0
+
+                        wss.clients.forEach(function each(client) {
+                            client.send(JSON.stringify({event: "game_over"}))
+                        })
+                    }, 1000)
                 }
-            }, 500)
+            }, 250)
     }
 
     wss.clients.forEach(function each(client) {
@@ -993,7 +1036,6 @@ app.post("/players", cors(), (req, res) => {
             temp_formatted_cards.push(['EmptyPlayer', 'EmptyPlayer'])
         }
     }
-    
 
     userRepo.getByLoginToken(user_request.token)
         .then((retrievedUser) => {
@@ -1031,16 +1073,15 @@ app.post("/toggle_game", cors(), (req, res) => {
                 }
             }
 
-            //all players are ready to start/stop the game
-            if (ready_users.length === playing_users.length && playing_users.length > 1) {
+            //all players are ready to start
+            if (ready_users.length === playing_users.length && playing_users.length > 1 && !game_running) {
                 ready_users.length = 0
 
                 //start the game
                 if (user_request.begin_game === 1) {
                     console.log("Game is starting!")
                     //build pre-flop actions array, parameters: no previous action, no is_raise
-                    setTimeout(setupFirstRound, 500)
-                    setTimeout(sendNextTurn, 1000)
+                    setTimeout(setupFirstRound, 250)
                 } 
             }
 
@@ -1124,8 +1165,10 @@ app.post("/call", cors(), (req, res) => {
                 if (actions.length === 0) {
                     setupNextRound()
                 }
+                else {
+                    setTimeout(sendNextTurn, 500)
+                }
 
-                setTimeout(sendNextTurn, 500)
             }
             else {
                 res.status(200).json({message: "It is currently not your turn."})
@@ -1150,8 +1193,10 @@ app.post("/check", cors(), (req, res) => {
                     if (actions.length === 0) {
                         setupNextRound()
                     }
+                    else {
+                        setTimeout(sendNextTurn, 500)
+                    }
 
-                    setTimeout(sendNextTurn, 500)
                 }
                 else {
                     res.status(200).json({message: "Calling is not a valid action."})
@@ -1200,8 +1245,10 @@ app.post("/fold", cors(), (req, res) => {
                 else if (actions.length === 0) {
                     setupNextRound()
                 }
+                else {
+                    setTimeout(sendNextTurn, 500)
+                }
 
-                setTimeout(sendNextTurn, 1000)
             }
             else {
                 res.status(200).json({message: "It is currently not your turn."})
@@ -1210,6 +1257,60 @@ app.post("/fold", cors(), (req, res) => {
         .catch((err) => {
             console.log(err)
             res.status(200).json({message: "User is not in the database."})
+        })
+})
+
+app.post("/auth_login_token", cors(), (req, res) => {
+    const user_request = {token: req.body.token}
+
+    userRepo.getByLoginToken(user_request.token)
+        .then((retrievedUser) => {
+            if (retrievedUser.login_token === user_request.token) {
+                res.status(201).json({message: "Login token authenticated.", auth: 1})
+            }
+            else {
+                res.status(200).json({message: "Invalid login token. (This path should not be reachable)", auth: 0})
+            }
+        })
+        .catch((err) => {
+            console.log(err)
+            res.status(200).json({message: "Invalid login token.", auth: 0})
+        })
+})
+
+app.post("/auth_game_token", cors(), (req, res) => {
+    const user_request = {token: req.body.token}
+
+    userRepo.getByGameToken(user_request.token)
+        .then((retrievedUser) => {
+            if (retrievedUser.game_token === user_request.token) {
+                res.status(201).json({message: "Game token authenticated.", auth: 1})
+            }
+            else {
+                res.status(200).json({message: "Invalid game token. (This path should not be reachable)", auth: 0})
+            }
+        })
+        .catch((err) => {
+            console.log(err)
+            res.status(200).json({message: "Invalid game token.", auth: 0})
+        })
+})
+
+app.post("/auth_ingame_token", cors(), (req, res) => {
+    const user_request = {token: req.body.token}
+
+    userRepo.getByIngameToken(user_request.token)
+        .then((retrievedUser) => {
+            if (retrievedUser.ingame_token === user_request.token) {
+                res.status(201).json({message: "Ingame token authenticated.", auth: 1})
+            }
+            else {
+                res.status(200).json({message: "Invalid ingame token. (This path should not be reachable)", auth: 0})
+            }
+        })
+        .catch((err) => {
+            console.log(err)
+            res.status(200).json({message: "Invalid ingame token.", auth: 0})
         })
 })
 

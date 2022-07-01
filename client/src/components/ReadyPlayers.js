@@ -28,7 +28,7 @@ function ReadyPlayers({ socket, ingameToken }) {
     
         function handleReadyPlayers(event) {
             const received_message = JSON.parse(event.data)
-            if (received_message.event === "start/stop" || received_message.event === "player") {
+            if (received_message.event === "start/stop" || received_message.event === "player" || received_message.event === "game_over") {
                 callbackReadyPlayersState()
             }
         }

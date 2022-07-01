@@ -21,7 +21,7 @@ function Pot({ socket }) {
     
         function handlePot(event) {
             const received_message = JSON.parse(event.data)
-            if (received_message.event === "next_turn") {
+            if (received_message.event === "next_turn" || received_message.event === "game_over") {
                 callbackPot()
             }
         }

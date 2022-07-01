@@ -3,7 +3,6 @@ import PlayerSlots from './PlayerSlots';
 import Actions from './Actions';
 import Dealer from './Dealer';
 import TableChips from './TableChips';
-import Timer from './Timer';
 import Board from './Board';
 import Pot from './Pot';
 import table from '../images/poker_table.png';
@@ -18,7 +17,6 @@ function App({ socket, ingameToken, setIngameToken }) {
       <header className="App-header">
         <PlayerSlots socket={socket} setIngameToken={setIngameToken} />
         <TableChips socket={socket} />
-        <Timer socket={socket} />
         <div className="poker-table-container">
           <Pot socket={socket} />
           <img src={table} className="poker-table" alt="" />
@@ -36,7 +34,6 @@ function App({ socket, ingameToken, setIngameToken }) {
         <TableChips socket={socket} />
         <Actions socket={socket} />
         <Dealer socket={socket} />
-        <Timer socket={socket} />
         <div className="poker-table-container">
           <Pot socket={socket} />
           <img src={table} className="poker-table" alt="" />

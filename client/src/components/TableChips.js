@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 
 function TableChips({ socket }) {
     const [tableChips, setTableChips] = useState([]);
+    console.log(tableChips)
     
     const callbackTableChipsState = useCallback(() => {
         function getTableChipsState() {

@@ -1,6 +1,6 @@
 import React from 'react';
 
-function UseGameToken() {
+function useGameToken() {
     const getGameToken = () => {
         const tokenString = sessionStorage.getItem('game-token')
         const userToken = JSON.parse(tokenString)
@@ -20,4 +20,4 @@ function UseGameToken() {
     }
 }
 
-export default UseGameToken;
+export default useGameToken;

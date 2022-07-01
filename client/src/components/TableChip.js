@@ -10,7 +10,11 @@ function TableChip({ chips }) {
         )
     }
 
-    return (null);
+    return (
+        <span className="table-chip" style={{visibility: "hidden"}} >
+            <h6 className="chip-value">0</h6>
+        </span>
+    )
 }
 
 export default TableChip;

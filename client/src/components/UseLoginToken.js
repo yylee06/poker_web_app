@@ -1,6 +1,6 @@
 import React from 'react';
 
-function UseLoginToken() {
+function useLoginToken() {
     const getLoginToken = () => {
         const tokenString = sessionStorage.getItem('login-token')
         const userToken = JSON.parse(tokenString)
@@ -20,4 +20,4 @@ function UseLoginToken() {
     }
 }
 
-export default UseLoginToken;
+export default useLoginToken;
