@@ -1,18 +1,53 @@
 import './Actions.css'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useForm } from "react-hook-form"
 
 function Actions({ socket }) {
     const { register, handleSubmit, getValues } = useForm();
     const [showRaiseForm, setShowRaiseForm] = useState(0);
     const [highestBet, setHighestBet] = useState(0);
+    const [chipDifferential, setChipDifferential] = useState(0);
+    const [currTableChips, setCurrTableChips] = useState(0);
+    const [currPlayerChips, setCurrPlayerChips] = useState(0);
+
+    const openRaiseForm = () => setShowRaiseForm(1);
+    const closeRaiseForm = () => setShowRaiseForm(0);
+
+    //sends login token to server, receives table chips and player chips of this user, for dynamic rendering of call button
+    const callbackCurrentChips = useCallback(() => {
+        const token_unparsed = sessionStorage.getItem('ingame-token')
+        const token_parsed = JSON.parse(token_unparsed)
+        const player_headers = {'Accept': 'application/json', 'Content-Type': 'application/json'};
+
+        function getCurrentChips() {
+            fetch('http://localhost:3080/current_chips', {method: 'POST', body: JSON.stringify({token: token_parsed?.token}), headers: player_headers})
+            .then(res => res.json())
+            .then((retrievedMessage) => {
+                if (retrievedMessage.auth === 1) {
+                    setCurrTableChips(retrievedMessage.tableChips)
+                    setCurrPlayerChips(retrievedMessage.playerChips)
+                }
+            })
+        }
+
+        getCurrentChips()
+    }, [])
+
+    useEffect(() => {
+        fetch('http://localhost:3080/highest_bet')
+            .then(res => res.json())
+            .then((retrievedMessage) => {
+                setHighestBet(retrievedMessage.highest_bet)
+            })
+    }, [])
+
+    useEffect(() => {
+        setChipDifferential((highestBet - currTableChips) < currPlayerChips ? highestBet - currTableChips : currPlayerChips)
+    }, [highestBet, currTableChips, currPlayerChips])
 
     const token_unparsed = sessionStorage.getItem('ingame-token')
     const token_parsed = JSON.parse(token_unparsed)
     const player_headers = {'Accept': 'application/json', 'Content-Type': 'application/json'};
-
-    const openRaiseForm = () => setShowRaiseForm(1);
-    const closeRaiseForm = () => setShowRaiseForm(0);
 
     //raise
     function onSubmit() {
@@ -23,7 +58,10 @@ function Actions({ socket }) {
         fetch('http://localhost:3080/raise', {method: 'POST', body: raise_body, headers: player_headers})
             .then(res => res.json())
             .then((retrievedMessage) => {
-                console.log(retrievedMessage.message)
+                if (retrievedMessage.auth === 1) {
+                    console.log(retrievedMessage.message)
+                    setChipDifferential(0)
+                }
             })
             .catch((err) => {
                 console.log(err)
@@ -36,7 +74,9 @@ function Actions({ socket }) {
                 fetch('http://localhost:3080/check', {method: 'POST', body: JSON.stringify({token: token_parsed?.token}), headers: player_headers})
                     .then(res => res.json())
                     .then((retrievedMessage) => {
-                        console.log(retrievedMessage.message)
+                        if (retrievedMessage.auth === 1) {
+                            console.log(retrievedMessage.message)
+                        }
                     })
                     .catch((err) => {
                         console.log(err)
@@ -46,7 +86,10 @@ function Actions({ socket }) {
                 fetch('http://localhost:3080/call', {method: 'POST', body: JSON.stringify({token: token_parsed?.token}), headers: player_headers})
                     .then(res => res.json())
                     .then((retrievedMessage) => {
-                        console.log(retrievedMessage.message)
+                        if (retrievedMessage.auth === 1) {
+                            console.log(retrievedMessage.message)
+                            setChipDifferential(0)
+                        }
                     })
                     .catch((err) => {
                         console.log(err)
@@ -56,7 +99,10 @@ function Actions({ socket }) {
                 fetch('http://localhost:3080/fold', {method: 'POST', body: JSON.stringify({token: token_parsed?.token}), headers: player_headers})
                     .then(res => res.json())
                     .then((retrievedMessage) => {
-                        console.log(retrievedMessage.message)
+                        if (retrievedMessage.auth === 1) {
+                            console.log(retrievedMessage.message)
+                            setChipDifferential(0)
+                        }
                     })
                     .catch((err) => {
                         console.log(err)
@@ -72,6 +118,7 @@ function Actions({ socket }) {
         function handleChips(event) {
             const received_message = JSON.parse(event.data)
             if (received_message.event === "next_turn") {
+                callbackCurrentChips()
                 setHighestBet(received_message.highest_bet)
             }
         }
@@ -79,7 +126,7 @@ function Actions({ socket }) {
         socket.addEventListener('message', handleChips)
 
         return () => { socket.removeEventListener('message', handleChips) }
-    }, [socket]);
+    }, [socket, callbackCurrentChips]);
 
 
 
@@ -97,7 +144,7 @@ function Actions({ socket }) {
                 </form>
             </div>
             <button className="check-button" onClick={() => doAction("check")}>Check</button>
-            <button className="call-button" onClick={() => doAction("call")}>Call</button>
+            <button className="call-button" onClick={() => doAction("call")}>{"Call " + chipDifferential}</button>
             <button className="fold-button" onClick={() => doAction("fold")}>Fold</button>
         </div>
     )

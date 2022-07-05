@@ -89,6 +89,8 @@ function PlayerSlots({ socket, setIngameToken }) {
                     callbackPlayerState();
                     callbackIngameToken(true);
                     break;
+                case "player_fold":
+                    callbackPlayerState();
                 case "next_turn":
                     callbackPlayerChipsState();
                     break;
@@ -98,6 +100,7 @@ function PlayerSlots({ socket, setIngameToken }) {
                 case "game_over":
                     callbackPlayerState();
                     callbackIngameToken(false);
+                    callbackPlayerChipsState();
 
                 default:
             }

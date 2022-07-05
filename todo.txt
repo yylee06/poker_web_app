@@ -1,28 +1,17 @@
 Short Term: 
-    When game starts or ends, remember to clear the ready_players array, because we are reusing for starting and stopping.
-    Build stop game API
-        -StartGame and StopGame might have glow (toggled) if same player starts and stops a game, not sure yet
-        -Remove ingametoken from players
-        -
-    Test stopping the game due to folding (using setupFirstRound)
-
-    
-
-
     send websocket message so that all clients know when one user folds (for visual effect)
     see how often playerslots re-renders during a game, big chance for optimization here through memoization
 
     Use memo in PlayerSlot to not re-render unless props have changed
+    Change opacity of playerslot when it's user's turn (use timer)
 
-    Instead of player timer as a number, have it as a progress bar (like a fuse) 
-        -Must be tied to playerslots, but should not re-render playerslots every 
-        x-Implement React.memo to not re-render children when rendering progress bar
+    Check out how often Actions.js renders.
+    Check if highestBet in actions.js updates every turn. (i.e. updates even if highestBet is changed to the same value)
+
+
 
 Bugs:
     React can't perform state update on an unmounted component, no-op (pot and board upon removing ingametoken)
-    Don't think showdown is working correctly, check this out later.
-    When user has valid game token but spoofs fake login token, user is not removed from game. What is the solution?
-        -Might be fine, as user is still pinged every 30 seconds, else is removed from the match.
 
      
 

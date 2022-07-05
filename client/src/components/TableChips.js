@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from 'react';
 
 function TableChips({ socket }) {
     const [tableChips, setTableChips] = useState([]);
-    console.log(tableChips)
     
     const callbackTableChipsState = useCallback(() => {
         function getTableChipsState() {
@@ -29,7 +28,7 @@ function TableChips({ socket }) {
     
         function handleTableChips(event) {
             const received_message = JSON.parse(event.data)
-            if (received_message.event === "next_turn") {
+            if (received_message.event === "next_turn" || received_message.event === "game_over") {
                 callbackTableChipsState()
             }
         }

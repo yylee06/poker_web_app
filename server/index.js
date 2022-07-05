@@ -112,7 +112,7 @@ let shuffled_deck = deck.shuffleDeck(unshuffled_deck)
 let sorted_winners = [];
 //array of players in game by index, 1 for in game, 0 for folded
 let players_ingame = [];
-//array of playeres that are currently all-in by index, 1 for in game, 0 for folded
+//array of players that are currently all-in by index, 1 for in game, 0 for folded
 let all_in_users = [];
 //array of players that have called all-in (holds objects {bet_size, player_index})
 let all_ins = [];
@@ -409,6 +409,10 @@ function defaultAction(username) {
             })
         }
 
+        wss.clients.forEach(function each(client) {
+            client.send(JSON.stringify({event: "player_fold"}))
+        })
+
         //winner is decided, only 1 player is left
         if (players_ingame.reduce((a, b) => a + b, 0) === 1) {
             calculateWinnings()
@@ -526,6 +530,22 @@ function indexCards() {
     }
 }
 
+//called once game is no longer running, cleans up global variables and sends respective messages to clients
+function endGameCleanup() {
+    game_running = false
+    players_ingame = Array(playing_users.length).fill(0)
+    all_in_users = Array(playing_users.length).fill(0)
+    resetChips()
+    showFormattedCards(false)
+    current_board.length = 0
+    house_chips = 0
+    ready_users.length = 0
+
+    wss.clients.forEach(function each(client) {
+        client.send(JSON.stringify({event: "game_over"}))
+    })
+}
+
 
 //builds the array of actions to be called, takes in current_action (action the last player has taken)
 //is called at beginning of preflop, flop, turn, river, or when a raise is made
@@ -555,18 +575,7 @@ function buildActionsArray(last_action, is_raise) {
 
 function setupFirstRound() {
     if (ready_users.length === playing_users.length) {
-        game_running = false
-        players_ingame = Array(playing_users.length).fill(0)
-        all_in_users = Array(playing_users.length).fill(0)
-        resetChips()
-        showFormattedCards(false)
-        current_board.length = 0
-        ready_users.length = 0
-
-        wss.clients.forEach(function each(client) {
-            client.send(JSON.stringify({event: "game_over"}))
-        })
-
+        endGameCleanup()
         return;
     }
 
@@ -667,20 +676,7 @@ function setupNextRound() {
                     setTimeout(setupFirstRound, 1000)
                 }
                 else {
-                    setTimeout(() => {
-                        game_running = false
-                        players_ingame = Array(playing_users.length).fill(0)
-                        all_in_users = Array(playing_users.length).fill(0)
-                        resetChips()
-                        showFormattedCards(false)
-                        current_board.length = 0
-                        house_chips = 0
-                        ready_users.length = 0
-
-                        wss.clients.forEach(function each(client) {
-                            client.send(JSON.stringify({event: "game_over"}))
-                        })
-                    }, 1000)
+                    setTimeout(endGameCleanup, 1000)
                 }
             }, 250)
     }
@@ -1118,7 +1114,7 @@ app.post("/raise", cors(), (req, res) => {
                 const new_useable = retrievedUser.chips_useable - (highest_bet - table_chips[current_turn])
                 playing_chips[current_turn] = new_useable
                 userRepo.updateChipsUseable(new_useable, retrievedUser.username)
-                res.status(201).json({message: "You have raised."})
+                res.status(201).json({message: "You have raised.", auth: 1})
 
                 //user raised, therefore actions array must be refashioned around the current user
                 buildActionsArray(current_turn, 1)
@@ -1126,12 +1122,12 @@ app.post("/raise", cors(), (req, res) => {
                 setTimeout(sendNextTurn, 500)
             }
             else {
-                res.status(200).json({message: "It is currently not your turn."})
+                res.status(200).json({message: "It is currently not your turn.", auth: 0})
             }
         })
         .catch((err) => {
             console.log(err)
-            res.status(200).json({message: "User is not in the database."})
+            res.status(200).json({message: "User is not in the database.", auth: 0})
         })
 
 })
@@ -1160,7 +1156,7 @@ app.post("/call", cors(), (req, res) => {
                 
                 playing_chips[current_turn] = new_useable
                 userRepo.updateChipsUseable(new_useable, retrievedUser.username)
-                res.status(201).json({message: "You have called."})
+                res.status(201).json({message: "You have called.", auth: 1})
 
                 if (actions.length === 0) {
                     setupNextRound()
@@ -1171,12 +1167,12 @@ app.post("/call", cors(), (req, res) => {
 
             }
             else {
-                res.status(200).json({message: "It is currently not your turn."})
+                res.status(200).json({message: "It is currently not your turn.", auth: 0})
             }
         })
         .catch((err) => {
             console.log(err)
-            res.status(200).json({message: "User is not in the database."})
+            res.status(200).json({message: "User is not in the database.", auth: 0})
         })
 })
 
@@ -1188,7 +1184,7 @@ app.post("/check", cors(), (req, res) => {
         .then((retrievedUser) => {
             if (retrievedUser.username === playing_users[current_turn]) {
                 if (table_chips[current_turn] === highest_bet) {
-                    res.status(201).json({message: "You have checked."})
+                    res.status(201).json({message: "You have checked.", auth: 1})
 
                     if (actions.length === 0) {
                         setupNextRound()
@@ -1199,17 +1195,17 @@ app.post("/check", cors(), (req, res) => {
 
                 }
                 else {
-                    res.status(200).json({message: "Calling is not a valid action."})
+                    res.status(200).json({message: "Checking is not a valid action.", auth: 0})
                 }
             }
             else {
-                res.status(200).json({message: "It is currently not your turn."})
+                res.status(200).json({message: "It is currently not your turn.", auth: 0})
             }
 
         })
         .catch((err) => {
             console.log(err)
-            res.status(200).json({message: "User is not in the database."})
+            res.status(200).json({message: "User is not in the database.", auth: 0})
         })
 })
 
@@ -1235,7 +1231,10 @@ app.post("/fold", cors(), (req, res) => {
                     })
                 }
 
-                res.status(201).json({message: "You have folded."})
+                wss.clients.forEach(function each(client) {
+                    client.send(JSON.stringify({event: "player_fold"}))
+                })
+                res.status(201).json({message: "You have folded.", auth: 1})
 
                 //winner is decided, only 1 player is left
                 if (players_ingame.reduce((a, b) => a + b, 0) === 1) {
@@ -1251,12 +1250,12 @@ app.post("/fold", cors(), (req, res) => {
 
             }
             else {
-                res.status(200).json({message: "It is currently not your turn."})
+                res.status(200).json({message: "It is currently not your turn.", auth: 0})
             }
         })
         .catch((err) => {
             console.log(err)
-            res.status(200).json({message: "User is not in the database."})
+            res.status(200).json({message: "User is not in the database.", auth: 0})
         })
 })
 
@@ -1312,6 +1311,35 @@ app.post("/auth_ingame_token", cors(), (req, res) => {
             console.log(err)
             res.status(200).json({message: "Invalid ingame token.", auth: 0})
         })
+})
+
+app.post("/current_chips", cors(), (req, res) => {
+    //ingame token
+    const user_request = {token: req.body.token}
+
+    userRepo.getByIngameToken(user_request.token)
+        .then((retrievedUser) => {
+            let player_index = playing_users.indexOf(retrievedUser.username)
+            if (player_index > -1) {
+                if (players_ingame[player_index] === 1) {
+                    res.status(201).json({message: "Sending chip differential.", auth: 1, tableChips: table_chips[player_index], playerChips: playing_chips[player_index]})
+                }
+                else {
+                    res.status(200).json({message: "User not in game.", auth: 0})
+                }
+            }
+            else {
+                res.status(200).json({message: "Invalid user request.", auth: 0})
+            }
+        })
+        .catch((err) => {
+            console.log(err)
+            res.status(200).json({message: "Error: invalid user token.", auth: 0})
+        })
+})
+
+app.get("/highest_bet", (req, res) => {
+    res.status(201).json({highest_bet: highest_bet})
 })
 
 app.get("/dealer", (req, res) => {
