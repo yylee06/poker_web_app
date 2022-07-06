@@ -372,14 +372,18 @@ class Deck {
             return 0
         }
 
+        //copy of players is made so that order of players is kept
+        const players_mutable = players.map(param => ({...param}));
+        console.log(players_mutable)
+
         //pre-sorting purely by highest_rank, easier for post-processing
-        players.sort(sortByHighRank)
-        players.reverse()
+        players_mutable.sort(sortByHighRank)
+        players_mutable.reverse()
 
         //creates map from players to sort by hand type, strongest to weakest
         const player_map = new Map()
         let sorted_players = []
-        for (const player of players) {
+        for (const player of players_mutable) {
             if (player_map.has(player.hand_strength)) {
                 player_map.get(player.hand_strength).push(player)
             }

@@ -347,8 +347,13 @@ function calculateWinnings() {
     }
     //if there is a single winner
     else {
-        distributeWinnings(winner, house_chips)               
+        distributeWinnings(winner, house_chips)      
     }
+
+    //sends winner(s) to client for glow visual effect
+    wss.clients.forEach(function each(client) {
+        client.send(JSON.stringify({event: "winner", winner: winner}))
+    })    
 
     //calculate side pots
     while (side_pots.length > 0) {
@@ -415,8 +420,9 @@ function defaultAction(username) {
 
         //winner is decided, only 1 player is left
         if (players_ingame.reduce((a, b) => a + b, 0) === 1) {
+            submitChips()
             calculateWinnings()
-            setTimeout(setupFirstRound, 500)
+            setTimeout(setupFirstRound, 1500)
         }
         else if (actions.length === 0) {
             setupNextRound()
@@ -570,12 +576,17 @@ function buildActionsArray(last_action, is_raise) {
         }
     }
 
+    //the person that raised does not get to go again, unless another user raises
+    if (is_raise) {
+        actions.pop()
+    }
+
     actions = actions.reverse()
 }
 
 function setupFirstRound() {
     if (ready_users.length === playing_users.length) {
-        endGameCleanup()
+        setTimeout(endGameCleanup, 1000)
         return;
     }
 
@@ -665,19 +676,15 @@ function setupNextRound() {
             //update formatted cards to show all valid cards for showdown
             showFormattedCards(true)
 
+            console.log(current_players)
+
             setTimeout(() => {
                 wss.clients.forEach(function each(client) {
                     client.send(JSON.stringify({event: "showdown"}))
                 })
                 calculateWinnings()
-
-                //if users want to continue the game
-                if (ready_users.length !== playing_users.length) {   
-                    setTimeout(setupFirstRound, 1000)
-                }
-                else {
-                    setTimeout(endGameCleanup, 1000)
-                }
+ 
+                setTimeout(setupFirstRound, 1500)
             }, 250)
     }
 
@@ -1238,8 +1245,9 @@ app.post("/fold", cors(), (req, res) => {
 
                 //winner is decided, only 1 player is left
                 if (players_ingame.reduce((a, b) => a + b, 0) === 1) {
+                    submitChips()
                     calculateWinnings()
-                    setupFirstRound()
+                    setTimeout(setupFirstRound, 1500)
                 }
                 else if (actions.length === 0) {
                     setupNextRound()

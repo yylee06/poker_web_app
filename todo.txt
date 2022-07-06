@@ -3,15 +3,21 @@ Short Term:
     see how often playerslots re-renders during a game, big chance for optimization here through memoization
 
     Use memo in PlayerSlot to not re-render unless props have changed
-    Change opacity of playerslot when it's user's turn (use timer)
 
     Check out how often Actions.js renders.
     Check if highestBet in actions.js updates every turn. (i.e. updates even if highestBet is changed to the same value)
 
+    Test turn-taking order with other poker app
+
+    Make users_logged array to see users currently logged in
+        -When logging in, see if user is already online, if so, do not give login token.
+    Ping users to see if online, 30 min timeout maybe?
+
+
 
 
 Bugs:
-    React can't perform state update on an unmounted component, no-op (pot and board upon removing ingametoken)
+
 
      
 

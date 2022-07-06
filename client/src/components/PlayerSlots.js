@@ -1,11 +1,44 @@
 import './PlayerSlots.css';
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import PlayerSlot from './PlayerSlot';
 import images from '../images/images';
+const MAX_PLAYERS = 10
 
 function PlayerSlots({ socket, setIngameToken }) {
     const [players, setPlayers] = useState([]);
     const [playerChips, setPlayerChips] = useState([]);
+    const [winners, setWinners] = useState(Array(MAX_PLAYERS).fill(0));
+    const playerList = useRef([]);
+
+    const callbackShowWinners = useCallback((curr_winners) => {
+      const showWinners = (curr_winners) => {
+        if (Array.isArray(curr_winners)) {
+          for (let winner of curr_winners) {
+            let winner_index = playerList.current.indexOf(winner)
+            if (winner_index > -1) {
+              setWinners(w => [...w.slice(0, winner_index), 1, ...w.slice(winner_index + 1, 10)])
+            }
+          }
+        }
+        else {
+          let winner_index = playerList.current.indexOf(curr_winners)
+          if (winner_index > -1) {
+            setWinners(w => [...w.slice(0, winner_index), 1, ...w.slice(winner_index + 1, 10)])
+          }
+        }
+      }
+
+      showWinners(curr_winners)
+    }, []);
+
+    const callbackResetWinners = useCallback(() => {
+      const resetWinners = () => {
+        setWinners(Array(MAX_PLAYERS).fill(0))
+      }
+
+      resetWinners()
+    }, [])
+
 
     const callbackPlayerChipsState = useCallback(() => {
       function getPlayerChipsState() {
@@ -30,10 +63,16 @@ function PlayerSlots({ socket, setIngameToken }) {
           .then(res => res.json())
           .then((retrievedMessage) => {
             let current_players = [];
+            let current_usernames = [];
             for (let i = 0; i < retrievedMessage.players.length; i++) {
               current_players[i] = {username: retrievedMessage.players[i], card1: retrievedMessage.cards[i][0], card2: retrievedMessage.cards[i][1]}
+              current_usernames.push(current_players[i].username)
             }
+
             setPlayers(current_players)
+
+            //refreshes playerList every API call, might be greedy?
+            playerList.current = current_usernames
           })
         }
     
@@ -88,20 +127,26 @@ function PlayerSlots({ socket, setIngameToken }) {
                 case "first_turn":
                     callbackPlayerState();
                     callbackIngameToken(true);
+                    callbackResetWinners();
                     break;
                 case "player_fold":
                     callbackPlayerState();
+                    break;
                 case "next_turn":
                     callbackPlayerChipsState();
                     break;
                 case "showdown":
                     callbackPlayerState();
                     break;
+                case "winner":
+                    callbackShowWinners(received_message.winner)
+                    break;
                 case "game_over":
                     callbackPlayerState();
                     callbackIngameToken(false);
                     callbackPlayerChipsState();
-
+                    callbackResetWinners();
+                    break;
                 default:
             }
         }
@@ -109,40 +154,40 @@ function PlayerSlots({ socket, setIngameToken }) {
         socket.addEventListener('message', handlePlayers)
 
         return () => { socket.removeEventListener('message', handlePlayers) }
-    }, [socket, callbackPlayerState, callbackIngameToken, callbackPlayerChipsState]);
+    }, [socket, callbackPlayerState, callbackIngameToken, callbackPlayerChipsState, callbackShowWinners, callbackResetWinners]);
 
     return (
         <div>
             <PlayerSlot currPlayer={(players.length < 1) ? {inUse:0} : {username:players[0].username, inUse: 1,
                         card1: images.get(players[0].card1), card2: images.get(players[0].card2), playerChips: playerChips[0]}}
-                        socket={socket} />
+                        socket={socket} winner={winners[0]} />
             <PlayerSlot currPlayer={(players.length < 2) ? {inUse:0} : {username:players[1].username, inUse: 2,
                         card1: images.get(players[1].card1), card2: images.get(players[1].card2), playerChips: playerChips[1]}}
-                        socket={socket} />
+                        socket={socket} winner={winners[1]} />
             <PlayerSlot currPlayer={(players.length < 3) ? {inUse:0} : {username:players[2].username, inUse: 3,
                         card1: images.get(players[2].card1), card2: images.get(players[2].card2), playerChips: playerChips[2]}}
-                        socket={socket} />
+                        socket={socket} winner={winners[2]} />
             <PlayerSlot currPlayer={(players.length < 4) ? {inUse:0} : {username:players[3].username, inUse: 4,
                         card1: images.get(players[3].card1), card2: images.get(players[3].card2), playerChips: playerChips[3]}}
-                        socket={socket} />
+                        socket={socket} winner={winners[3]} />
             <PlayerSlot currPlayer={(players.length < 5) ? {inUse:0} : {username:players[4].username, inUse: 5,
                         card1: images.get(players[4].card1), card2: images.get(players[4].card2), playerChips: playerChips[4]}}
-                        socket={socket} />
+                        socket={socket} winner={winners[4]} />
             <PlayerSlot currPlayer={(players.length < 6) ? {inUse:0} : {username:players[5].username, inUse: 6,
                         card1: images.get(players[5].card1), card2: images.get(players[5].card2), playerChips: playerChips[5]}}
-                        socket={socket} />
+                        socket={socket} winner={winners[5]} />
             <PlayerSlot currPlayer={(players.length < 7) ? {inUse:0} : {username:players[6].username, inUse: 7,
                         card1: images.get(players[6].card1), card2: images.get(players[6].card2), playerChips: playerChips[6]}}
-                        socket={socket} />
+                        socket={socket} winner={winners[6]} />
             <PlayerSlot currPlayer={(players.length < 8) ? {inUse:0} : {username:players[7].username, inUse: 8,
                         card1: images.get(players[7].card1), card2: images.get(players[7].card2), playerChips: playerChips[7]}}
-                        socket={socket} />
+                        socket={socket} winner={winners[7]} />
             <PlayerSlot currPlayer={(players.length < 9) ? {inUse:0} : {username:players[8].username, inUse: 9,
                         card1: images.get(players[8].card1), card2: images.get(players[8].card2), playerChips: playerChips[8]}}
-                        socket={socket} />
+                        socket={socket} winner={winners[8]} />
             <PlayerSlot currPlayer={(players.length < 10) ? {inUse:0} : {username:players[9].username, inUse: 10,
                         card1: images.get(players[9].card1), card2: images.get(players[9].card2), playerChips: playerChips[9]}}
-                        socket={socket} />
+                        socket={socket} winner={winners[9]} />
         </div>
     )
 }
