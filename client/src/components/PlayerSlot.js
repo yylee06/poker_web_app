@@ -5,7 +5,7 @@ import Timer from './Timer';
 
 //currPlayer has parameters username, card1, card2, inUse, playerChips
 //inUse doubles as a player index for timer (i.e. 1-10)
-function PlayerSlot({ socket, currPlayer, winner }) {
+function PlayerSlot({ socket, currPlayer, winner, handStrength }) {
   const [glow, setGlow] = useState(0)
 
   useEffect(() => {
@@ -23,6 +23,9 @@ function PlayerSlot({ socket, currPlayer, winner }) {
         </div>
         <h6 className="username">{currPlayer.username}</h6>
         <PlayerChip chips={currPlayer.playerChips} />
+        <div className="hand_strength_container" style={{visibility: (handStrength.length === 0) ? "hidden" : "visible"}}>
+          <h6 className="hand_strength">{handStrength}</h6>
+        </div>
         <Timer socket={socket} playerIndex={currPlayer.inUse} />
       </div>
     );

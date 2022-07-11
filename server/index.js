@@ -110,6 +110,8 @@ let highest_bet = 0;
 let shuffled_deck = deck.shuffleDeck(unshuffled_deck)
 //sorted array of best hands from best to worst
 let sorted_winners = [];
+//array of each player's hand power, indexed in the same way as current_players
+let displayed_hand_strengths = [];
 //array of players in game by index, 1 for in game, 0 for folded
 let players_ingame = [];
 //array of players that are currently all-in by index, 1 for in game, 0 for folded
@@ -140,6 +142,7 @@ setInterval(() => {
                 else {
                     playing_users.splice(player_index, 1)
                     playing_chips.splice(player_index, 1)
+                    removeFromReadyPlayers(key)
                 }
             }
 
@@ -169,6 +172,26 @@ function setHighestBet(default_value) {
     highest_bet = default_value
 }
 
+//removes entries of displayed_hand_strengths if user has folded, called only before showdown event
+function purgeDisplayedHandStrengths() {
+    for (let i = 0; i < players_ingame.length; i++) {
+        if (players_ingame[i] !== 1) {
+            displayed_hand_strengths[i] = ''
+        }
+    }
+}
+
+function removeFromReadyPlayers(username_to_remove) {
+    let player_index = ready_users.indexOf(username_to_remove)
+    if (player_index > -1) {
+        ready_users.splice(player_index, 1)
+    }
+
+    wss.clients.forEach(function each(client) {
+        client.send(JSON.stringify({event: "start/stop"}))
+    })    
+}
+
 function reorganizePlayers() {
     //removes all players with less than 20 chips
     function removeInvalidPlayers() {
@@ -185,6 +208,7 @@ function reorganizePlayers() {
         for (let invalid_player of invalid_players) {
             playing_users.splice(invalid_player, 1)
             playing_chips.splice(invalid_player, 1)
+            removeFromReadyPlayers(invalid_player)
         }
     }
 
@@ -196,6 +220,7 @@ function reorganizePlayers() {
 
             while (leaving_users.length > 0) {
                 let leaving_user_index = leaving_users.pop()
+                removeFromReadyPlayers(playing_users[leaving_user_index])
                 playing_users.splice(leaving_user_index, 1)
                 playing_chips.splice(leaving_user_index, 1)
             }
@@ -205,6 +230,15 @@ function reorganizePlayers() {
     //flush out leaving players first because leaving_users are globally indexed
     removeLeavingPlayers()
     removeInvalidPlayers()
+}
+
+//to be called when player rejoins an ongoing game (i.e. player should be removed from leaving_players)
+function playerReturns(player_index) {
+    let returning_user_index = leaving_users.indexOf(player_index)
+
+    if (returning_user_index > -1) {
+        leaving_users.splice(returning_user_index, 1)
+    }
 }
 
 //function to send to client what cards are shown, if game comes to showdown, all cards are shown
@@ -389,9 +423,6 @@ function calculateWinnings() {
             distributeWinnings(curr_winner, side_pot_earnings)
         }
     }
-
-    //kick out any players under 20 chips
-    reorganizePlayers()
 }
 
 //performs the default action (check or fold) due to time running out
@@ -480,11 +511,22 @@ function incrementButton() {
     button_index = (button_index + 1) % playing_users.length
 }
 
+//called when games are stopped, resets button index back to -1 (base state)
+function resetButton() {
+    button_index = -1
+}
+
 //sets small and big blinds respectively to the left of the dealer button
 //if user does not have enough chips to cover, user is kicked out of table (might be subject to change for tournament mode (later addition))
 function setBlinds() {
-    const small_blind_index = (button_index + 1) % playing_users.length
-    const big_blind_index = (button_index + 2) % playing_users.length
+    let small_blind_index = (button_index + 1) % playing_users.length
+    let big_blind_index = (button_index + 2) % playing_users.length
+
+    //only in heads-up poker (i.e. 1v1)
+    if (playing_users.length === 2) {
+        small_blind_index = button_index
+        big_blind_index = (button_index + 1) % playing_users.length
+    }
 
     userRepo.getByUsername(playing_users[small_blind_index])
         .then((retrievedUser) => {
@@ -541,6 +583,7 @@ function endGameCleanup() {
     game_running = false
     players_ingame = Array(playing_users.length).fill(0)
     all_in_users = Array(playing_users.length).fill(0)
+    resetButton()
     resetChips()
     showFormattedCards(false)
     current_board.length = 0
@@ -559,6 +602,11 @@ function buildActionsArray(last_action, is_raise) {
     //reset actions array to remake it
     actions.length = 0
     let first_actor = (button_index + 1) % (playing_users.length)
+
+    //allows player on button to act first ONLY during pre-flop, in the case it is a heads up game (i.e. 1v1)
+    if (playing_users.length === 2 && current_board.length === 0) {
+        first_actor = button_index
+    }
 
     if (is_raise === 1) {
         first_actor = (last_action + 1) % (playing_users.length)
@@ -585,7 +633,10 @@ function buildActionsArray(last_action, is_raise) {
 }
 
 function setupFirstRound() {
-    if (ready_users.length === playing_users.length) {
+    //kick out any players under 20 chips and those that have left the game
+    reorganizePlayers()
+
+    if (ready_users.length === playing_users.length || playing_users.length === 1) {
         setTimeout(endGameCleanup, 1000)
         return;
     }
@@ -622,6 +673,7 @@ function setupFirstRound() {
     deck.dealBoard(shuffled_deck, board)
     deck.multiHandChecker(board, current_players)
     sorted_winners = deck.multiHandSorter(current_players)
+    displayed_hand_strengths = deck.displayHandStrength(current_players)
 
     //indexes shown_cards array to be formatted and then sent to client
     indexCards()
@@ -673,14 +725,13 @@ function setupNextRound() {
             setTimeout(sendNextTurn, 500)
             break;
         case 5:
+            purgeDisplayedHandStrengths()
             //update formatted cards to show all valid cards for showdown
             showFormattedCards(true)
 
-            console.log(current_players)
-
             setTimeout(() => {
                 wss.clients.forEach(function each(client) {
-                    client.send(JSON.stringify({event: "showdown"}))
+                    client.send(JSON.stringify({event: "showdown", hand_strengths: [...displayed_hand_strengths]}))
                 })
                 calculateWinnings()
  
@@ -828,7 +879,13 @@ app.post("/login", cors(), (req, res) => {
     userRepo.getByUsername(user.username)
         .then((retrievedUser) => {
             if (retrievedUser.password === user.password) {
-                res.status(201).json({message: `User "${user.username}" has logged in.`, auth: 1, token: retrievedUser.login_token})
+                //user is already logged on on another browser
+                if (clients.clientList.hasOwnProperty(retrievedUser.username)) {
+                    res.status(200).json({message: `User is already currently logged in.`, auth: 0})
+                }
+                else {
+                    res.status(201).json({message: `User "${user.username}" has logged in.`, auth: 1, token: retrievedUser.login_token})
+                }
             }
             else {
                 res.status(200).json({message: `Password is incorrect.`, auth: 0})
@@ -837,6 +894,43 @@ app.post("/login", cors(), (req, res) => {
         })
         .catch((err) => {
             res.status(200).json({message: `User "${user.username}" is not in the database.`, auth: 0})
+        })
+});
+
+app.post("/logout", cors(), (req, res) => {
+    //login-token
+    const user_request = {token: req.body.token}
+
+    userRepo.getByLoginToken(user_request.token)
+        .then((retrievedUser) => {
+            if (clients.clientList.hasOwnProperty(retrievedUser.username)) {
+                delete clients.clientList[retrievedUser.username]
+
+                let player_index = playing_users.indexOf(retrievedUser.username)
+                if (player_index > -1) {
+                    if (game_running) {
+                        leaving_users.push(player_index)
+                    }
+                    else {
+                        playing_users.splice(player_index, 1)
+                        playing_chips.splice(player_index, 1)
+                        wss.clients.forEach(function each(client) {
+                            client.send(JSON.stringify({event: "player"}))
+                        })
+                    }
+                }
+
+                removeFromReadyPlayers(retrievedUser.username)
+                res.status(201).json({message: `User has successfully logged out.`, auth: 1})
+            }
+            else {
+                console.log("User is not in database! -LOGOUT- ")
+                res.status(200).json({message: `User is already logged out.`, auth: 0})
+            }
+        })
+        .catch((err) => {
+            console.log(err)
+            res.status(200).json({message: `Error: User is not in the database.`, auth: 0})
         })
 });
 
@@ -956,10 +1050,12 @@ app.post("/join_game", cors(), (req, res) => {
                 res.status(201).json({message: `User has entered the game.`, token: retrievedUser.game_token, auth: 1})
             }
             else {
+                //removes player from leaving_users array
+                playerReturns(player_index)
                 wss.clients.forEach(function each(client) {
                     client.send(JSON.stringify({event: "player"}))
                 })
-                res.status(200).json({message: `User has rejoined the game.`, token: retrievedUser.game_token, auth: 1})
+                res.status(200).json({message: `User has rejoined the game.`, token: retrievedUser.game_token, ingame_token: retrievedUser.ingame_token, auth: 3, })
             }
         })
         .catch((err) => {
@@ -977,6 +1073,7 @@ app.post("/exit_game", cors(), (req, res) => {
             if (player_index > -1) {
                 if (game_running) {
                     leaving_users.push(player_index)
+                    res.status(201).json({message: "User has left the game, but can rejoin if time permits.", auth: 1})
                 }
                 else {
                     playing_users.splice(player_index, 1)
@@ -984,6 +1081,7 @@ app.post("/exit_game", cors(), (req, res) => {
                     wss.clients.forEach(function each(client) {
                         client.send(JSON.stringify({event: "player"}))
                     })
+                    removeFromReadyPlayers(retrievedUser.username)
                     res.status(201).json({message: "user has left the game.", auth: 1})
                 }
             }

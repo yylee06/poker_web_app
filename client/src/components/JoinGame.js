@@ -1,7 +1,7 @@
 import './JoinGame.css';
 import React from 'react';
 
-function JoinGame({ setGameToken }) {
+function JoinGame({ setGameToken, setIngameToken }) {
   function onSubmit() {
     const token_unparsed = sessionStorage.getItem('login-token')
     const token_parsed = JSON.parse(token_unparsed)
@@ -17,8 +17,10 @@ function JoinGame({ setGameToken }) {
         else if (retrievedMessage.auth === 2) {
           alert('You do not have enough chips on hand to join. (Minimum chips required to enter: 100)');
         }
-        else {
-          alert(retrievedMessage.message);
+        else if (retrievedMessage.auth === 3) {
+          alert('You have rejoined the game.');
+          setGameToken({token: retrievedMessage.token})
+          setIngameToken({token: retrievedMessage.ingame_token})
         }
     })
   }

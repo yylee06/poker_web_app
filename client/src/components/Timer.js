@@ -47,6 +47,7 @@ function Timer({ socket, playerIndex }) {
         const countdown = setInterval(() => {
             setTimer(lastTimer => lastTimer - 1)
             proxy_timer.current -= 1
+            console.log(proxy_timer.current)
 
             if (proxy_timer.current <= 0) {
                 clearInterval(countdown)

@@ -23,7 +23,7 @@ function Login({ setLoginToken }) {
             console.log("You have logged in.")
           }
           else {
-            alert('Username or password is incorrect.')
+            alert(retrievedMessage.message)
           }
         })
   }

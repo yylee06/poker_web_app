@@ -19,7 +19,7 @@ const tokenAuth = ((socket, loginToken, setLoginToken, gameToken, setGameToken, 
             }
             else {
                 //if properly authenticated, sends login token to server
-                socket.onopen = () => {
+                if (socket) {
                     socket.send(JSON.stringify({event: "ws_auth", token: loginToken}))
                 }
             }

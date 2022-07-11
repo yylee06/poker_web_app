@@ -1,5 +1,5 @@
 import './Actions.css'
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useForm } from "react-hook-form"
 
 function Actions({ socket }) {
@@ -144,7 +144,7 @@ function Actions({ socket }) {
                 </form>
             </div>
             <button className="check-button" onClick={() => doAction("check")}>Check</button>
-            <button className="call-button" onClick={() => doAction("call")}>{"Call " + chipDifferential}</button>
+            <button className="call-button" onClick={() => doAction("call")}>{(chipDifferential === 0) ? ("Call") : ("Call " + chipDifferential)}</button>
             <button className="fold-button" onClick={() => doAction("fold")}>Fold</button>
         </div>
     )

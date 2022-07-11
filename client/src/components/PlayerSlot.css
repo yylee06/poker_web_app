@@ -62,7 +62,30 @@
     position: absolute;
 }
 
+.hand_strength_container {
+    width: 120px;
+    height: 20px;
+    border-radius: 30px;
+    border: 3px hidden;
+    background-color: rgba(199, 6, 6, 0.75);
+    bottom: 15px;
+    right: 10px;
+    margin-top: 0px;
+    margin-bottom: 0px;
+    position: absolute;
+    text-align: center;
+}
+
+.hand_strength {
+    margin-top: 2px;
+    width: 100%;
+    position: absolute;
+    color: whitesmoke;
+    font-size: 12px;
+}
+
 .timer_container {
     bottom: 2px;
     position: absolute;
 }
+

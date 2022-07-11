@@ -1,5 +1,4 @@
 Short Term: 
-    send websocket message so that all clients know when one user folds (for visual effect)
     see how often playerslots re-renders during a game, big chance for optimization here through memoization
 
     Use memo in PlayerSlot to not re-render unless props have changed
@@ -7,16 +6,16 @@ Short Term:
     Check out how often Actions.js renders.
     Check if highestBet in actions.js updates every turn. (i.e. updates even if highestBet is changed to the same value)
 
-    Test turn-taking order with other poker app
+    Add queue for players to enter the game once game starts
+        -Players should not be able to enter during game.
 
-    Make users_logged array to see users currently logged in
-        -When logging in, see if user is already online, if so, do not give login token.
-    Ping users to see if online, 30 min timeout maybe?
 
 
 
 
 Bugs:
+    If game ends on 1st actor, and game is stopped and restarted, timer does not move.
+        -Try using solution used for heads up poker
 
 
      

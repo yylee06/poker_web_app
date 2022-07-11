@@ -17,7 +17,6 @@ function Components() {
   const { gameToken, setGameToken } = useGameToken();
   const { ingameToken, setIngameToken } = useIngameToken();
 
-
   //websocket API
   const socket = useMemo(() => {
     return new WebSocket('ws://localhost:3080');
@@ -52,41 +51,41 @@ function Components() {
     tokenAuth(socket, loginToken, setLoginToken, gameToken, setGameToken, ingameToken, setIngameToken)
   }, [socket, loginToken, setLoginToken, gameToken, setGameToken, ingameToken, setIngameToken])
 
+  function onExitGame() {
+    const token_unparsed = sessionStorage.getItem('game-token')
+    const token_parsed = JSON.parse(token_unparsed)
+    const game_headers = {'Accept': 'application/json', 'Content-Type': 'application/json'};
+
+    setGameToken({})
+    setIngameToken({})
+    sessionStorage.removeItem("game-token")
+    sessionStorage.removeItem("ingame-token")
+
+    fetch('http://localhost:3080/exit_game', {method: 'POST', body: JSON.stringify({token: token_parsed?.token}), headers: game_headers})
+      .then(res => res.json())
+      .then((retrievedMessage) => {
+        if (retrievedMessage.auth === 1) {
+          console.log("You have successfully left the game.")
+        }
+    })
+  }
+
   function onLogout() {
-    //exits game if in game
-    if (gameToken) {
-      onExitGame()
-    }
+    const token_unparsed = sessionStorage.getItem('login-token')
+    const token_parsed = JSON.parse(token_unparsed)
+    const game_headers = {'Accept': 'application/json', 'Content-Type': 'application/json'};
 
     //removes token and clears session storage, might find less redundant way to do this later
     setLoginToken({})
     setGameToken({})
     setIngameToken({})
     sessionStorage.clear()
-  }
 
-  function onExitGame() {
-    const token_unparsed = sessionStorage.getItem('game-token')
-    const token_parsed = JSON.parse(token_unparsed)
-    const game_headers = {'Accept': 'application/json', 'Content-Type': 'application/json'};
-
-    fetch('http://localhost:3080/exit_game', {method: 'POST', body: JSON.stringify({token: token_parsed?.token}), headers: game_headers})
+    fetch('http://localhost:3080/logout', {method: 'POST', body: JSON.stringify({token: token_parsed?.token}), headers: game_headers})
       .then(res => res.json())
       .then((retrievedMessage) => {
         if (retrievedMessage.auth === 1) {
-          setGameToken({})
-          setIngameToken({})
-          sessionStorage.removeItem("game-token")
-          sessionStorage.removeItem("ingame-token")
-          if (ingameToken) {
-            alert("You have left the game, and will by default check until folding. You may rejoin to resume your turn manually if time permits.")
-          }
-          else {
-            alert("You have left the game.")
-          }
-        }
-        else {
-          alert('You cannot currently exit the game.');
+            console.log("You have successfully logged out.")
         }
     })
   }
@@ -107,7 +106,7 @@ function Components() {
         <App socket={socket} ingameToken={ingameToken} setIngameToken={setIngameToken}/>
         <Withdraw />
         <Deposit />
-        <JoinGame setGameToken={setGameToken}/>
+        <JoinGame setGameToken={setGameToken} setIngameToken={setIngameToken}/>
         <button className="login-button" onClick={onLogout}>Logout</button>
       </div>
     )

@@ -374,7 +374,6 @@ class Deck {
 
         //copy of players is made so that order of players is kept
         const players_mutable = players.map(param => ({...param}));
-        console.log(players_mutable)
 
         //pre-sorting purely by highest_rank, easier for post-processing
         players_mutable.sort(sortByHighRank)
@@ -416,6 +415,47 @@ class Deck {
         }
 
         return sorted_names
+    }
+
+    //called only after hand_strength and high_rank is already established
+    displayHandStrength(players) {
+        //hand_strength in string format, used for client display
+        const displayed_hand_strengths = []
+
+        for (let player of players) {
+            switch(player.hand_strength) {
+                case "SF":
+                    displayed_hand_strengths.push("Straight Flush")
+                    break;
+                case "4":
+                    displayed_hand_strengths.push("Four of a Kind")
+                    break;
+                case "32":
+                    displayed_hand_strengths.push("Full House")
+                    break;
+                case "F":
+                    displayed_hand_strengths.push("Flush")
+                    break;
+                case "S":
+                    displayed_hand_strengths.push("Straight")
+                    break;
+                case "3":
+                    displayed_hand_strengths.push("Three of a Kind")
+                    break;
+                case "22":
+                    displayed_hand_strengths.push("Two Pair")
+                    break;
+                case "2":
+                    displayed_hand_strengths.push("Pair")
+                    break;
+                case "1":
+                    displayed_hand_strengths.push("High Card")
+                    break;
+                default:
+            }
+        }
+
+        return displayed_hand_strengths
     }
 
     //removes user from sorted_names when given user folds, also parses subarrays for ties
