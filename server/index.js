@@ -603,9 +603,16 @@ function buildActionsArray(last_action, is_raise) {
     actions.length = 0
     let first_actor = (button_index + 1) % (playing_users.length)
 
-    //allows player on button to act first ONLY during pre-flop, in the case it is a heads up game (i.e. 1v1)
-    if (playing_users.length === 2 && current_board.length === 0) {
-        first_actor = button_index
+    //pre-flop
+    if (current_board.length === 0) {
+        //allows player on button to act first ONLY during pre-flop, in the case it is a heads up game (i.e. 1v1)
+        if (playing_users.length === 2) {
+            first_actor = button_index
+        }
+        //first actor pre-flop with 3+ players is the 3rd player to the left of the dealer (i.e. left of the big blind)
+        else {
+            first_actor = (button_index + 3) % (playing_users.length)
+        }
     }
 
     if (is_raise === 1) {
@@ -1042,11 +1049,23 @@ app.post("/join_game", cors(), (req, res) => {
                 res.status(200).json({message: `Error: User does not have enough chips on hand.`, auth: 2})
             }
             else if (player_index === -1) {
+                if (game_running) {
+                    //pushes values to flag-holding arrays such that for-of loops used for calculations function correctly
+                    players_ingame.push(0)
+                    all_in_users.push(0)
+                    formatted_cards.push(['EmptyPlayer', 'EmptyPlayer'])
+                }
+
                 playing_users.push(retrievedUser.username)
                 playing_chips.push(retrievedUser.chips_useable)
-                wss.clients.forEach(function each(client) {
-                    client.send(JSON.stringify({event: "player"}))
-                })
+
+                //200ms delay set to avoid any incorrect state changes in client, likely to run fine without delay if needed
+                setTimeout(() => {
+                    wss.clients.forEach(function each(client) {
+                        client.send(JSON.stringify({event: "player"}))
+                    })
+                }, 200)
+
                 res.status(201).json({message: `User has entered the game.`, token: retrievedUser.game_token, auth: 1})
             }
             else {
@@ -1441,6 +1460,24 @@ app.post("/current_chips", cors(), (req, res) => {
         .catch((err) => {
             console.log(err)
             res.status(200).json({message: "Error: invalid user token.", auth: 0})
+        })
+})
+
+app.post("/chat", cors(), (req, res) => {
+    //login-token
+    const user_request = {token: req.body.token, content: req.body.content}
+
+    userRepo.getByLoginToken(user_request.token)
+        .then((retrievedUser) => {
+            let message_broadcasted = retrievedUser.username + ": " + user_request.content
+            wss.clients.forEach(function each(client) {
+                client.send(JSON.stringify({event: "chat_message", content: message_broadcasted}))
+            })    
+            res.status(201).json({message: "Message successfully sent."})
+        })
+        .catch((err) => {
+            console.log(err)
+            res.status(200).json({message: "Error: Invalid login token."})
         })
 })
 

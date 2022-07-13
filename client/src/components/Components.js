@@ -5,11 +5,12 @@ import Withdraw from './Withdraw';
 import Deposit from './Deposit';
 import JoinGame from './JoinGame';
 import App from './App';
-import useLoginToken from './useLoginToken';
-import useGameToken from './useGameToken';
-import useIngameToken from './useIngameToken';
 import ReadyPlayers from './ReadyPlayers';
-import tokenAuth from './tokenAuth';
+import Chatbox from './Chatbox';
+import useLoginToken from '../auth/useLoginToken';
+import useGameToken from '../auth/useGameToken';
+import useIngameToken from '../auth/useIngameToken';
+import tokenAuth from '../auth/tokenAuth';
 
 function Components() {
   console.log("Rendering Component!")
@@ -107,6 +108,7 @@ function Components() {
         <Withdraw />
         <Deposit />
         <JoinGame setGameToken={setGameToken} setIngameToken={setIngameToken}/>
+        <Chatbox socket={socket} />
         <button className="login-button" onClick={onLogout}>Logout</button>
       </div>
     )
@@ -117,6 +119,7 @@ function Components() {
       <div>
         <App socket={socket} ingameToken={ingameToken} setIngameToken={setIngameToken}/>
         <ReadyPlayers socket={socket} ingameToken={ingameToken} />
+        <Chatbox socket={socket} />
         <button className="exit-game-button" onClick={onExitGame}>Leave Game</button>
         <button className="login-button" onClick={onLogout}>Logout</button>
       </div>
@@ -127,6 +130,7 @@ function Components() {
     <div>
       <App socket={socket} ingameToken={ingameToken} setIngameToken={setIngameToken}/>
       <ReadyPlayers socket={socket} ingameToken={ingameToken} />
+      <Chatbox socket={socket} />
       <button className="exit-game-button" onClick={onExitGame}>Leave Game</button>
       <button className="login-button" onClick={onLogout}>Logout</button>
     </div>

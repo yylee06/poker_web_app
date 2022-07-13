@@ -1,5 +1,5 @@
 import './Dealer.css';
-import dealer_chip from '../images/dealer_chip.png'
+import dealer_chip from '../assets/images/dealer_chip.png'
 import { useState, useEffect, useCallback } from 'react';
 
 //currentDealer: index of the current owner of the dealer chip

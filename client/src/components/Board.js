@@ -1,5 +1,5 @@
 import './Board.css';
-import images from '../images/images';
+import images from '../assets/images/images';
 import { useState, useEffect, useCallback } from 'react';
 
 function Board({ socket }) {

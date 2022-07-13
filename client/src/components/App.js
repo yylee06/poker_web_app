@@ -5,7 +5,7 @@ import Dealer from './Dealer';
 import TableChips from './TableChips';
 import Board from './Board';
 import Pot from './Pot';
-import table from '../images/poker_table.png';
+import table from '../assets/images/poker_table.png';
 //images is a map of all cards, including the table and player assets
 
 function App({ socket, ingameToken, setIngameToken }) {

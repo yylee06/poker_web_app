@@ -25,8 +25,9 @@ function Timer({ socket, playerIndex }) {
                     player_turn.current = false
                 }
             }
-            else if (received_message.event === "update_board") {
+            else if (received_message.event === "update_board" || received_message.event === "first_turn") {
                 //default value, essentially timer is hidden when turn is not progressing
+                //also used such that stateful value "turn" is toggled, causing re-render on edge-cases
                 setTurn(false)
             }
             else if (received_message.event === "game_over") {
@@ -47,7 +48,6 @@ function Timer({ socket, playerIndex }) {
         const countdown = setInterval(() => {
             setTimer(lastTimer => lastTimer - 1)
             proxy_timer.current -= 1
-            console.log(proxy_timer.current)
 
             if (proxy_timer.current <= 0) {
                 clearInterval(countdown)

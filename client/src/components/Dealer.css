@@ -22,11 +22,11 @@
 }
 
 .dealer_slot-loc-2 {
-    transform: translateX(280px) translateY(120px)
+    transform: translateX(340px) translateY(-140px)
 }
 
 .dealer_slot-loc-3 {
-    transform: translateX(340px) translateY(-140px)
+    transform: translateX(280px) translateY(120px)
 }
 
 .dealer_slot-loc-4 {
@@ -46,9 +46,9 @@
 }
 
 .dealer_slot-loc-8 {
-    transform: translateX(-200px) translateY(-210px)
+    transform: translateX(160px) translateY(-210px)
 }
 
 .dealer_slot-loc-9 {
-    transform: translateX(160px) translateY(-210px)
+    transform: translateX(-200px) translateY(-210px)
 }

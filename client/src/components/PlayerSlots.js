@@ -1,7 +1,7 @@
 import './PlayerSlots.css';
 import { useState, useEffect, useCallback, useRef } from 'react'
 import PlayerSlot from './PlayerSlot';
-import images from '../images/images';
+import images from '../assets/images/images';
 const MAX_PLAYERS = 10
 
 function PlayerSlots({ socket, setIngameToken }) {
@@ -64,7 +64,6 @@ function PlayerSlots({ socket, setIngameToken }) {
         fetch('http://localhost:3080/player_chips')
           .then(res => res.json())
           .then((retrievedMessage) => {
-            console.log(retrievedMessage.chips)
             setPlayerChips(retrievedMessage.chips)
           })
       }
