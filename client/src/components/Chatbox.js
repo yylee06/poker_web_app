@@ -1,12 +1,14 @@
 import './Chatbox.css';
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useForm } from "react-hook-form";
+import audiofiles from '../assets/audio/audiofiles';
 
 function Chatbox({ socket }) {
   const [chatbox, setChatbox] = useState('Please be kind in chat! Or don\'t, I\'m just a sign!')
   const numLines = useRef(1)
   const messageDump = useRef('Please be kind in chat! Or don\'t, I\'m just a sign!')
   const { register, handleSubmit, getValues } = useForm();
+  const new_message_audio = useRef(new Audio(audiofiles.get('new_message')))
 
   const callbackChatbox = useCallback((message) => {
     const updateChatbox = (message) => {
@@ -25,6 +27,7 @@ function Chatbox({ socket }) {
     }
 
     updateChatbox(message)
+    new_message_audio.current.play()
   }, [])
 
   useEffect(() => {

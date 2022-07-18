@@ -1,9 +1,12 @@
 import './Board.css';
 import images from '../assets/images/images';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import audiofiles from '../assets/audio/audiofiles';
 
 function Board({ socket }) {
     const [board, setBoard] = useState({first: "Empty", second: "Empty", third: "Empty", fourth: "Empty", fifth: "Empty"});
+    const deal_flop_audio = useRef(new Audio(audiofiles.get('deal_flop')))
+    const deal_card_audio = useRef(new Audio(audiofiles.get('deal_card')))
 
     const callbackBoard = useCallback(() => {
         function getBoard() {
@@ -21,12 +24,22 @@ function Board({ socket }) {
         callbackBoard()
     }, [callbackBoard])
 
+    //plays dealing audio files when board updates (except when board is cleared, hence the conditionals)
+    useEffect(() => {
+        if (board.third !== "Empty" && board.fourth === "Empty") {
+            deal_flop_audio.current.play()
+        }
+        else if (board.fourth !== "Empty") {
+            deal_card_audio.current.play()
+        }
+    }, [board])
+
     useEffect(() => {
         console.log("Board event listeners added!")
     
         function handleBoard(event) {
             const received_message = JSON.parse(event.data)
-            if (received_message.event === "update_board" || received_message.event === "first_turn") {
+            if (received_message.event === "update_board" || received_message.event === "first_turn" || received_message.event === "game_over") {
                 callbackBoard()
             }
         }

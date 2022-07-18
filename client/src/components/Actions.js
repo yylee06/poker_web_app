@@ -9,6 +9,7 @@ function Actions({ socket }) {
     const [chipDifferential, setChipDifferential] = useState(0);
     const [currTableChips, setCurrTableChips] = useState(0);
     const [currPlayerChips, setCurrPlayerChips] = useState(0);
+    const [buttonDisabled, setButtonDisabled] = useState(0);
 
     const openRaiseForm = () => setShowRaiseForm(1);
     const closeRaiseForm = () => setShowRaiseForm(0);
@@ -51,6 +52,12 @@ function Actions({ socket }) {
 
     //raise
     function onSubmit() {
+        //disable buttons, and re-enable after 500ms
+        setButtonDisabled(1)
+        setTimeout(() => {
+            setButtonDisabled(0)
+        }, 500)
+        
         let raise = getValues();
         let raise_amount = parseInt(raise.amount)
         const raise_body = JSON.stringify({token: token_parsed?.token, amount: raise_amount});
@@ -69,6 +76,12 @@ function Actions({ socket }) {
     }
 
     function doAction(action) {
+        //disable buttons, and re-enable after 500ms
+        setButtonDisabled(1)
+        setTimeout(() => {
+            setButtonDisabled(0)
+        }, 500)
+
         switch(action) {
             case "check":
                 fetch('http://localhost:3080/check', {method: 'POST', body: JSON.stringify({token: token_parsed?.token}), headers: player_headers})
@@ -138,14 +151,14 @@ function Actions({ socket }) {
                     <label className="form_label" htmlFor="amount"><b>Raise To:</b></label>
                     <input type="number" placeholder="Chips to Raise" name="amount" {...register("amount")} min={highestBet + 20} required/>
                     <div className="btn-container">
-                        <button type="submit" className="btn">Raise</button>
+                        <button type="submit" className="btn" disabled={buttonDisabled}>Raise</button>
                         <button type="button" className="btn cancel" onClick={closeRaiseForm}>Cancel</button>
                     </div>
                 </form>
             </div>
-            <button className="check-button" onClick={() => doAction("check")}>Check</button>
-            <button className="call-button" onClick={() => doAction("call")}>{(chipDifferential === 0) ? ("Call") : ("Call " + chipDifferential)}</button>
-            <button className="fold-button" onClick={() => doAction("fold")}>Fold</button>
+            <button className="check-button" disabled={buttonDisabled} onClick={() => doAction("check")}>Check</button>
+            <button className="call-button" disabled={buttonDisabled} onClick={() => doAction("call")}>{(chipDifferential === 0) ? ("Call") : ("Call " + chipDifferential)}</button>
+            <button className="fold-button" disabled={buttonDisabled} onClick={() => doAction("fold")}>Fold</button>
         </div>
     )
 }

@@ -2,6 +2,7 @@ import './PlayerSlots.css';
 import { useState, useEffect, useCallback, useRef } from 'react'
 import PlayerSlot from './PlayerSlot';
 import images from '../assets/images/images';
+import audiofiles from '../assets/audio/audiofiles';
 const MAX_PLAYERS = 10
 
 function PlayerSlots({ socket, setIngameToken }) {
@@ -10,6 +11,7 @@ function PlayerSlots({ socket, setIngameToken }) {
     const [winners, setWinners] = useState(Array(MAX_PLAYERS).fill(0));
     const [handStrengths, setHandStrengths] = useState([]);
     const playerList = useRef([]);
+    const deal_hand_audio = useRef(new Audio(audiofiles.get('deal_hand')))
 
     const callbackShowWinners = useCallback((curr_winners) => {
       const showWinners = (curr_winners) => {
@@ -148,6 +150,7 @@ function PlayerSlots({ socket, setIngameToken }) {
                     callbackIngameToken(true);
                     callbackResetWinners();
                     callbackHideHandStrengths();
+                    deal_hand_audio.current.play();
                     break;
                 case "player_fold":
                     callbackPlayerState();

@@ -459,7 +459,7 @@ function defaultAction(username) {
             setupNextRound()
         }
         else {
-            setTimeout(sendNextTurn, 500)
+            sendNextTurn()
         }
     }
     else {
@@ -468,7 +468,7 @@ function defaultAction(username) {
             setupNextRound()
         }
         else {
-            setTimeout(sendNextTurn, 500)
+            sendNextTurn()
         }
     }
 }
@@ -495,11 +495,13 @@ function sendNextTurn() {
     let current_actor = playing_users[current_turn]
 
     //sends the first turn to each client (must be sent to every client for visual timer)
-    wss.clients.forEach(function each(client) {
-        client.send(JSON.stringify({event: "next_turn", highest_bet: highest_bet, turn: current_turn}))
-    })
-
-    resetTimer(current_actor)
+    setTimeout(() => {
+        wss.clients.forEach(function each(client) {
+            client.send(JSON.stringify({event: "next_turn", highest_bet: highest_bet, turn: current_turn}))
+        })
+    
+        resetTimer(current_actor)
+    }, 500)
 }
 
 //initializes the chip values of every player
@@ -699,7 +701,7 @@ function setupFirstRound() {
     //builds array of actions for next round
     buildActionsArray(-1, 0)
 
-    setTimeout(sendNextTurn, 500)
+    sendNextTurn()
 }
 
 function setupNextRound() {
@@ -717,19 +719,31 @@ function setupNextRound() {
             }
             setHighestBet(0)
             buildActionsArray(-1, 0)
-            setTimeout(sendNextTurn, 500)
+            sendNextTurn()
+
+            wss.clients.forEach(function each(client) {
+                client.send(JSON.stringify({event: "update_board"}))
+            })
             break;
         case 3:
             current_board.push(board[3])
             setHighestBet(0)
             buildActionsArray(-1, 0)
-            setTimeout(sendNextTurn, 500)
+            sendNextTurn()
+
+            wss.clients.forEach(function each(client) {
+                client.send(JSON.stringify({event: "update_board"}))
+            })
             break;
         case 4:
             current_board.push(board[4])
             setHighestBet(0)
             buildActionsArray(-1, 0)
-            setTimeout(sendNextTurn, 500)
+            sendNextTurn()
+
+            wss.clients.forEach(function each(client) {
+                client.send(JSON.stringify({event: "update_board"}))
+            })
             break;
         case 5:
             purgeDisplayedHandStrengths()
@@ -745,10 +759,6 @@ function setupNextRound() {
                 setTimeout(setupFirstRound, 1500)
             }, 250)
     }
-
-    wss.clients.forEach(function each(client) {
-        client.send(JSON.stringify({event: "update_board"}))
-    })
 }
 
 function arrayIsEqual(arr1, arr2) {
@@ -1243,7 +1253,7 @@ app.post("/raise", cors(), (req, res) => {
                 //user raised, therefore actions array must be refashioned around the current user
                 buildActionsArray(current_turn, 1)
 
-                setTimeout(sendNextTurn, 500)
+                sendNextTurn()
             }
             else {
                 res.status(200).json({message: "It is currently not your turn.", auth: 0})
@@ -1286,7 +1296,7 @@ app.post("/call", cors(), (req, res) => {
                     setupNextRound()
                 }
                 else {
-                    setTimeout(sendNextTurn, 500)
+                    sendNextTurn()
                 }
 
             }
@@ -1314,7 +1324,7 @@ app.post("/check", cors(), (req, res) => {
                         setupNextRound()
                     }
                     else {
-                        setTimeout(sendNextTurn, 500)
+                        sendNextTurn()
                     }
 
                 }
@@ -1370,7 +1380,7 @@ app.post("/fold", cors(), (req, res) => {
                     setupNextRound()
                 }
                 else {
-                    setTimeout(sendNextTurn, 500)
+                    sendNextTurn()
                 }
 
             }
