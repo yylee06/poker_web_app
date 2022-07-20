@@ -1504,7 +1504,8 @@ app.get("/player_chips", (req, res) => {
 })
 
 app.get("/table_chips", (req, res) => {
-    res.status(201).json({chips: [...table_chips]})
+    let num_players_ingame = players_ingame.reduce((a, b) => a + b, 0)
+    res.status(201).json({chips: [...table_chips], num_players_ingame: num_players_ingame})
 })
 
 app.get("/ready_players", (req, res) => {

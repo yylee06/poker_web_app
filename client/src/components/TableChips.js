@@ -1,16 +1,36 @@
 import './TableChips.css';
 import TableChip from './TableChip';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import audiofiles from '../assets/audio/audiofiles';
 
 function TableChips({ socket }) {
     const [tableChips, setTableChips] = useState([]);
+    const totalChips = useRef(0);
+    const totalNumPlayers = useRef(-1);
+    const play_chips_audio = useRef(new Audio(audiofiles.get('play_chips')))
+    const check_audio = useRef(new Audio(audiofiles.get('check')))
     
     const callbackTableChipsState = useCallback(() => {
         function getTableChipsState() {
           fetch('http://localhost:3080/table_chips')
             .then(res => res.json())
             .then((retrievedMessage) => {
-              setTableChips(retrievedMessage.chips)
+                setTableChips(retrievedMessage.chips)
+
+                //find sum of tableChips, if larger than last sum, this means a player has called/raised
+                //if sum of tableChips and sum of numPlayers is the same as last cycle, a player has checked
+                let newTotalChips = retrievedMessage.chips.reduce((a, b) => a + b, 0)
+                let newTotalNumPlayers = retrievedMessage.num_players_ingame
+
+                if (newTotalChips > totalChips.current && totalNumPlayers.current > 1) {
+                    play_chips_audio.current.play()
+                }
+                else if (newTotalChips === totalChips.current && newTotalNumPlayers === totalNumPlayers.current && newTotalNumPlayers > 1) {
+                    check_audio.current.play()
+                }
+
+                totalNumPlayers.current = newTotalNumPlayers
+                totalChips.current = newTotalChips
             })
         }
     
@@ -19,6 +39,8 @@ function TableChips({ socket }) {
 
     useEffect(() => {
         console.log("Table chips initially rendered.")
+        play_chips_audio.current.volume = 0.5
+        check_audio.current.volume = 0.5
 
         callbackTableChipsState()
     }, [callbackTableChipsState])

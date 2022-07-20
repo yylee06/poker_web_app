@@ -2,14 +2,10 @@ Short Term:
     see how often playerslots re-renders during a game, big chance for optimization here through memoization
         -can use memo to reduce renders, likely useable in playerslots.js
 
-    add audio sounds
-        O-hand drawn
-        O-card put on board
-        O-chat message
-        -your turn
-        -check
-        -raise or call
-            -
+    Think of possible way to control play_chips + check audio from actions (more reactive)
+
+    add admin-commands for certain users (i.e. me)
+    Redudancy likely in playerslot for winner + glow
 
 
 Bugs:

@@ -11,7 +11,10 @@ function PlayerSlots({ socket, setIngameToken }) {
     const [winners, setWinners] = useState(Array(MAX_PLAYERS).fill(0));
     const [handStrengths, setHandStrengths] = useState([]);
     const playerList = useRef([]);
+    //index of current client (i.e. user's controllable player character)
+    const clientIndex = useRef(-1);
     const deal_hand_audio = useRef(new Audio(audiofiles.get('deal_hand')))
+    const your_turn_audio = useRef(new Audio(audiofiles.get('your_turn')))
 
     const callbackShowWinners = useCallback((curr_winners) => {
       const showWinners = (curr_winners) => {
@@ -88,6 +91,11 @@ function PlayerSlots({ socket, setIngameToken }) {
             for (let i = 0; i < retrievedMessage.players.length; i++) {
               current_players[i] = {username: retrievedMessage.players[i], card1: retrievedMessage.cards[i][0], card2: retrievedMessage.cards[i][1]}
               current_usernames.push(current_players[i].username)
+
+              //this is the index of the current player's character
+              if (current_players[i].card1 !== "EmptyPlayer" && current_players[i].card1 !== "Back") {
+                clientIndex.current = i
+              }
             }
 
             setPlayers(current_players)
@@ -157,6 +165,10 @@ function PlayerSlots({ socket, setIngameToken }) {
                     break;
                 case "next_turn":
                     callbackPlayerChipsState();
+                    if (received_message.turn === clientIndex.current) {
+                      your_turn_audio.current.volume = 0.2
+                      your_turn_audio.current.play();
+                    }
                     break;
                 case "showdown":
                     callbackPlayerState();
