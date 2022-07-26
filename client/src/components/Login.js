@@ -2,7 +2,7 @@ import './Login.css';
 import React from 'react';
 import { useForm } from "react-hook-form";
 
-function Login({ setLoginToken }) {
+function Login({ setLoginToken, setAdminToken }) {
   const { register, handleSubmit, getValues } = useForm();
   const [show, setShow] = React.useState('');
   const openForm = () => setShow('1');
@@ -21,6 +21,10 @@ function Login({ setLoginToken }) {
             setLoginToken({token: retrievedMessage.token})
             sessionStorage.setItem("username", JSON.stringify({username: user.username}))
             console.log("You have logged in.")
+
+            if (retrievedMessage.is_admin === 1) {
+              setAdminToken({token: retrievedMessage.token})
+            }
           }
           else {
             alert(retrievedMessage.message)

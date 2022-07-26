@@ -143,6 +143,10 @@ setInterval(() => {
                     playing_users.splice(player_index, 1)
                     playing_chips.splice(player_index, 1)
                     removeFromReadyPlayers(key)
+
+                    wss.clients.forEach(function each(client) {
+                        client.send(JSON.stringify({event: "player"}))
+                    })    
                 }
             }
 
@@ -359,8 +363,8 @@ function calculateWinnings() {
         let winner_index = playing_users.indexOf(winner)
 
         userRepo.getByUsername(winner)
-            .then((retrievedUser) => {
-                let new_useable = retrievedUser.chips_useable + earnings
+            .then(() => {
+                let new_useable = playing_chips[winner_index] + earnings
                 playing_chips[winner_index] = new_useable
                 userRepo.updateChipsUseable(new_useable, winner)
             })
@@ -397,7 +401,7 @@ function calculateWinnings() {
         let winner_index = 0
 
         if (side_pot.pot_size === 0) {
-            return;
+            continue;
         }
 
         while (side_pot_winners.length === 0) {
@@ -455,21 +459,13 @@ function defaultAction(username) {
             calculateWinnings()
             setTimeout(setupFirstRound, 1500)
         }
-        else if (actions.length === 0) {
-            setupNextRound()
-        }
         else {
             sendNextTurn()
         }
     }
     else {
         //user checks
-        if (actions.length === 0) {
-            setupNextRound()
-        }
-        else {
-            sendNextTurn()
-        }
+        sendNextTurn()
     }
 }
 
@@ -483,25 +479,34 @@ function sendNextTurn() {
     let users_ingame = players_ingame.reduce((a, b) => a + b, 0)
     let users_all_in = all_in_users.reduce((a, b) => a + b, 0)
 
-    if ((users_ingame - users_all_in) <= 1) {
+    if ((users_ingame - users_all_in) <= 1 && actions.length === 0) {
+        //current_turn set to -1, meaning no actions can be taken by anyone until the end of the game
+        current_turn = -1
         showFormattedCards(true)
-        setupNextRound()
-        return;
-    }
-
-    current_turn = actions.pop()
-
-    //username taken initially in case user exits browser before timer reaches 0
-    let current_actor = playing_users[current_turn]
-
-    //sends the first turn to each client (must be sent to every client for visual timer)
-    setTimeout(() => {
+        //ws message sent to update table_chips, pot, timer, player_chips
         wss.clients.forEach(function each(client) {
             client.send(JSON.stringify({event: "next_turn", highest_bet: highest_bet, turn: current_turn}))
         })
-    
-        resetTimer(current_actor)
-    }, 500)
+        setTimeout(setupNextRound, 2000)
+    }
+    else if (actions.length === 0) {
+        setupNextRound()
+    }
+    else {
+        current_turn = actions.pop()
+
+        //username taken initially in case user exits browser before timer reaches 0
+        let current_actor = playing_users[current_turn]
+
+        //sends the first turn to each client (must be sent to every client for visual timer)
+        setTimeout(() => {
+            wss.clients.forEach(function each(client) {
+                client.send(JSON.stringify({event: "next_turn", highest_bet: highest_bet, turn: current_turn}))
+            })
+        
+            resetTimer(current_actor)
+        }, 500)
+    }
 }
 
 //initializes the chip values of every player
@@ -601,8 +606,19 @@ function endGameCleanup() {
 //builds the array of actions to be called, takes in current_action (action the last player has taken)
 //is called at beginning of preflop, flop, turn, river, or when a raise is made
 function buildActionsArray(last_action, is_raise) {
+    let users_ingame = players_ingame.reduce((a, b) => a + b, 0)
+    let users_all_in = all_in_users.reduce((a, b) => a + b, 0)
+    
     //reset actions array to remake it
     actions.length = 0
+
+    //if users_ingame - users_all_in <= 1, this means that no further actions can be taken yet the game progresses to the end
+    //actions will stay as an empty array until the start of the next game
+    //this code block does not run if the last action was a raise. In the case the last player goes all-in using a raise, the actions array will be 0 regardless.
+    if ((users_ingame - users_all_in) <= 1 && !is_raise) {
+        return;
+    }
+
     let first_actor = (button_index + 1) % (playing_users.length)
 
     //pre-flop
@@ -634,7 +650,8 @@ function buildActionsArray(last_action, is_raise) {
     }
 
     //the person that raised does not get to go again, unless another user raises
-    if (is_raise) {
+    //does not remove last action if user that raised went all-in
+    if (is_raise && !all_in_users[last_action % playing_users.length]) {
         actions.pop()
     }
 
@@ -645,7 +662,7 @@ function setupFirstRound() {
     //kick out any players under 20 chips and those that have left the game
     reorganizePlayers()
 
-    if (ready_users.length === playing_users.length || playing_users.length === 1) {
+    if (ready_users.length >= playing_users.length || playing_users.length === 1) {
         setTimeout(endGameCleanup, 1000)
         return;
     }
@@ -788,11 +805,11 @@ function checkUserExists(username) {
 }
 
 //calls the createUser sql query function, but also returns a hash for the login token
-function addNewUser(username, password) {
+function addNewUser(username, password, is_admin) {
     const login_token = crypto.createHash('sha256').update(username).digest('hex')
     const game_token = crypto.createHash('sha256').update(login_token).digest('hex')
     const ingame_token = crypto.createHash('sha256').update(game_token).digest('hex')
-    return userRepo.createUser(username, password, login_token, game_token, ingame_token)
+    return userRepo.createUser(username, password, login_token, game_token, ingame_token, is_admin)
 }
 
 //returns user with given username
@@ -837,15 +854,17 @@ function initTable() {
                 {
                     username: 'ylee',
                     password: 'dogwater',
+                    is_admin: 1,
                 },
                 {
                     username: 'Basil',
                     password: 'catnip',
+                    is_admin: 0
                 }
             ]
             return Promise.all(users.map((user) => {
-                const { username, password } = user
-                return addNewUser(username, password)
+                const { username, password, is_admin } = user
+                return addNewUser(username, password, is_admin)
             }))
             resolve('success')
         })
@@ -901,7 +920,7 @@ app.post("/login", cors(), (req, res) => {
                     res.status(200).json({message: `User is already currently logged in.`, auth: 0})
                 }
                 else {
-                    res.status(201).json({message: `User "${user.username}" has logged in.`, auth: 1, token: retrievedUser.login_token})
+                    res.status(201).json({message: `User "${user.username}" has logged in.`, auth: 1, token: retrievedUser.login_token, is_admin: retrievedUser.is_admin})
                 }
             }
             else {
@@ -941,7 +960,6 @@ app.post("/logout", cors(), (req, res) => {
                 res.status(201).json({message: `User has successfully logged out.`, auth: 1})
             }
             else {
-                console.log("User is not in database! -LOGOUT- ")
                 res.status(200).json({message: `User is already logged out.`, auth: 0})
             }
         })
@@ -961,7 +979,7 @@ app.post("/register", cors(), (req, res) => {
         })
         .catch((err) => {
             res.status(201).json({message: `User "${user.username}" has been created.`, auth: 1})
-            addNewUser(user.username, user.password)
+            addNewUser(user.username, user.password, 0)
         })
 });
 
@@ -1233,19 +1251,21 @@ app.post("/raise", cors(), (req, res) => {
         .then((retrievedUser) => {
             //only accept request from player who's turn it is, else send a message saying it's not your turn
             if (retrievedUser.username === playing_users[current_turn]) {
+                let new_useable = 0
                 //all-in
                 if (user_request.amount >= (retrievedUser.chips_useable + table_chips[current_turn])) {
-                    highest_bet = retrievedUser.chips_useable + table_chips[current_turn]
-                    table_chips[current_turn] = highest_bet
+                    //new_useable does not need to be changed, as all-in means new_useable === 0
+                    highest_bet = Math.max(highest_bet, retrievedUser.chips_useable + table_chips[current_turn])
+                    table_chips[current_turn] = retrievedUser.chips_useable + table_chips[current_turn]
                     all_ins.push({bet_size: table_chips[current_turn], player_index: current_turn})
                     all_in_users[current_turn] = 1
                 }
                 //normal raise
                 else {
                     highest_bet = user_request.amount
+                    new_useable = retrievedUser.chips_useable - (highest_bet - table_chips[current_turn])
                     table_chips[current_turn] = highest_bet
                 }
-                const new_useable = retrievedUser.chips_useable - (highest_bet - table_chips[current_turn])
                 playing_chips[current_turn] = new_useable
                 userRepo.updateChipsUseable(new_useable, retrievedUser.username)
                 res.status(201).json({message: "You have raised.", auth: 1})
@@ -1292,12 +1312,7 @@ app.post("/call", cors(), (req, res) => {
                 userRepo.updateChipsUseable(new_useable, retrievedUser.username)
                 res.status(201).json({message: "You have called.", auth: 1})
 
-                if (actions.length === 0) {
-                    setupNextRound()
-                }
-                else {
-                    sendNextTurn()
-                }
+                sendNextTurn()
 
             }
             else {
@@ -1320,13 +1335,7 @@ app.post("/check", cors(), (req, res) => {
                 if (table_chips[current_turn] === highest_bet) {
                     res.status(201).json({message: "You have checked.", auth: 1})
 
-                    if (actions.length === 0) {
-                        setupNextRound()
-                    }
-                    else {
-                        sendNextTurn()
-                    }
-
+                    sendNextTurn()
                 }
                 else {
                     res.status(200).json({message: "Checking is not a valid action.", auth: 0})
@@ -1375,9 +1384,6 @@ app.post("/fold", cors(), (req, res) => {
                     submitChips()
                     calculateWinnings()
                     setTimeout(setupFirstRound, 1500)
-                }
-                else if (actions.length === 0) {
-                    setupNextRound()
                 }
                 else {
                     sendNextTurn()
@@ -1448,6 +1454,24 @@ app.post("/auth_ingame_token", cors(), (req, res) => {
         })
 })
 
+app.post("/auth_admin_token", cors(), (req, res) => {
+    const user_request = {token: req.body.token}
+
+    userRepo.getByLoginToken(user_request.token)
+        .then((retrievedUser) => {
+            if (retrievedUser.login_token === user_request.token && retrievedUser.is_admin === 1) {
+                res.status(201).json({message: "Admin token authenticated.", auth: 1})
+            }
+            else {
+                res.status(200).json({message: "Invalid admin token.", auth: 0})
+            }
+        })
+        .catch((err) => {
+            console.log(err)
+            res.status(200).json({message: "Invalid admin token.", auth: 0})
+        })
+})
+
 app.post("/current_chips", cors(), (req, res) => {
     //ingame token
     const user_request = {token: req.body.token}
@@ -1491,6 +1515,116 @@ app.post("/chat", cors(), (req, res) => {
         })
 })
 
+app.post("/player_still_ingame", cors(), (req, res) => {
+    //login-token
+    const user_request = {token: req.body.token}
+
+    userRepo.getByLoginToken(user_request.token)
+        .then((retrievedUser) => {
+            let player_index = playing_users.indexOf(retrievedUser.username)
+            if (player_index > -1) {
+                res.status(201).json({message: "User still in game.", auth: 1})
+            }
+            else {
+                res.status(201).json({message: "User not in game.", auth: 0})
+            }
+        })
+        .catch((err) => {
+            console.log(err)
+            res.status(200).json({message: "Error: Invalid login token.", auth: 0})
+        })
+})
+
+app.post("/change_chips", cors(), (req, res) => {
+    //login-token, admin-only
+    const user_request = {token: req.body.token, username: req.body.username, amount: req.body.amount}
+
+    userRepo.getByLoginToken(user_request.token)
+        .then((retrievedUser) => {
+            if (retrievedUser.is_admin === 1) {
+                userRepo.updateChipsBank(user_request.amount, user_request.username)
+                    .catch((err) => {
+                        console.log(err)
+                        res.status(200).json({message: "Error: Targetted user is not in database."})
+                    })
+                res.status(201).json({message: "Targetted user's chips successfully updated."})
+            }
+            else {
+                res.status(200).json({message: "Error: User does not have access to this command."})
+            }
+        })
+        .catch((err) => {
+            console.log(err)
+            res.status(200).json({message: "Error: Invalid login token."})
+        })
+})
+
+app.post("/change_password", cors(), (req, res) => {
+    //login-token, admin-only
+    const user_request = {token: req.body.token, username: req.body.username, password: req.body.password}
+
+    userRepo.getByLoginToken(user_request.token)
+        .then((retrievedUser) => {
+            if (retrievedUser.is_admin === 1) {
+                userRepo.updateUserPassword(user_request.username, user_request.password)
+                    .catch((err) => {
+                        console.log(err)
+                        res.status(200).json({message: "Error: Targetted user is not in database."})
+                    })
+                res.status(201).json({message: "Targetted user's password successfully updated."})
+            }
+            else {
+                res.status(200).json({message: "Error: User does not have access to this command."})
+            }
+        })
+        .catch((err) => {
+            console.log(err)
+            res.status(200).json({message: "Error: Invalid login token."})
+        })
+})
+
+app.post("/force_logout", cors(), (req, res) => {
+    //login-token, admin-only
+    const user_request = {token: req.body.token, username: req.body.username}
+
+    userRepo.getByLoginToken(user_request.token)
+        .then((retrievedUser) => {
+            if (retrievedUser.is_admin === 1) {
+                if (clients.clientList.hasOwnProperty(user_request.username)) {
+                    delete clients.clientList[user_request.username]
+
+                    let player_index = playing_users.indexOf(user_request.username)
+                    if (player_index > -1) {
+                        if (game_running) {
+                            leaving_users.push(player_index)
+                        }
+                        else {
+                            playing_users.splice(player_index, 1)
+                            playing_chips.splice(player_index, 1)
+                            removeFromReadyPlayers(user_request.username)
+
+                            wss.clients.forEach(function each(client) {
+                                client.send(JSON.stringify({event: "player"}))
+                            })    
+                        }
+                    }
+
+                    res.status(201).json({message: "Targetted user has been successfully logged out."})
+                }
+                else {
+                    res.status(200).json({message: "Error: Targetted user is not currently logged in."})
+                }
+            }
+            else {
+                res.status(200).json({message: "Error: User does not have access to this command."})
+            }
+        })
+        .catch((err) => {
+            console.log(err)
+            res.status(200).json({message: "Error: Invalid login token."})
+        })
+})
+
 app.get("/highest_bet", (req, res) => {
     res.status(201).json({highest_bet: highest_bet})
 })
@@ -1505,7 +1639,7 @@ app.get("/player_chips", (req, res) => {
 
 app.get("/table_chips", (req, res) => {
     let num_players_ingame = players_ingame.reduce((a, b) => a + b, 0)
-    res.status(201).json({chips: [...table_chips], num_players_ingame: num_players_ingame})
+    res.status(201).json({chips: [...table_chips], num_players_ingame: num_players_ingame, current_turn: current_turn})
 })
 
 app.get("/ready_players", (req, res) => {

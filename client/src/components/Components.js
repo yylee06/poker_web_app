@@ -10,13 +10,16 @@ import Chatbox from './Chatbox';
 import useLoginToken from '../auth/useLoginToken';
 import useGameToken from '../auth/useGameToken';
 import useIngameToken from '../auth/useIngameToken';
+import useAdminToken from '../auth/useAdminToken';
 import tokenAuth from '../auth/tokenAuth';
+import RestrictedActions from './RestrictedActions';
 
 function Components() {
   console.log("Rendering Component!")
   const { loginToken, setLoginToken } = useLoginToken();
   const { gameToken, setGameToken } = useGameToken();
   const { ingameToken, setIngameToken } = useIngameToken();
+  const { adminToken, setAdminToken } = useAdminToken();
 
   //websocket API
   const socket = useMemo(() => {
@@ -49,8 +52,8 @@ function Components() {
 
   //authenticates all tokens on every token shift
   useEffect(() => {
-    tokenAuth(socket, loginToken, setLoginToken, gameToken, setGameToken, ingameToken, setIngameToken)
-  }, [socket, loginToken, setLoginToken, gameToken, setGameToken, ingameToken, setIngameToken])
+    tokenAuth(socket, loginToken, setLoginToken, gameToken, setGameToken, ingameToken, setIngameToken, adminToken, setAdminToken)
+  }, [socket, loginToken, setLoginToken, gameToken, setGameToken, ingameToken, setIngameToken, adminToken, setAdminToken])
 
   function onExitGame() {
     const token_unparsed = sessionStorage.getItem('game-token')
@@ -80,6 +83,11 @@ function Components() {
     setLoginToken({})
     setGameToken({})
     setIngameToken({})
+
+    if (adminToken) {
+      setAdminToken({})
+    }
+
     sessionStorage.clear()
 
     fetch('http://localhost:3080/logout', {method: 'POST', body: JSON.stringify({token: token_parsed?.token}), headers: game_headers})
@@ -95,13 +103,27 @@ function Components() {
     return (
       <div>
         <App socket={socket} ingameToken={ingameToken} setIngameToken={setIngameToken}/>
-        <Login loginToken={loginToken} setLoginToken={setLoginToken} />
+        <Login setLoginToken={setLoginToken} setAdminToken={setAdminToken} />
         <Register />
       </div>
     )
   }
   
   else if (!gameToken) {
+    if (adminToken) {
+      return (
+        <div>
+          <App socket={socket} ingameToken={ingameToken} setIngameToken={setIngameToken}/>
+          <Withdraw />
+          <Deposit />
+          <JoinGame setGameToken={setGameToken} setIngameToken={setIngameToken}/>
+          <RestrictedActions />
+          <Chatbox socket={socket} />
+          <button className="login-button" onClick={onLogout}>Logout</button>
+        </div>
+      )
+    }
+
     return (
       <div>
         <App socket={socket} ingameToken={ingameToken} setIngameToken={setIngameToken}/>
@@ -118,7 +140,7 @@ function Components() {
     return (
       <div>
         <App socket={socket} ingameToken={ingameToken} setIngameToken={setIngameToken}/>
-        <ReadyPlayers socket={socket} ingameToken={ingameToken} />
+        <ReadyPlayers socket={socket} setGameToken={setGameToken} ingameToken={ingameToken} />
         <Chatbox socket={socket} />
         <button className="exit-game-button" onClick={onExitGame}>Leave Game</button>
         <button className="login-button" onClick={onLogout}>Logout</button>
@@ -129,7 +151,7 @@ function Components() {
   return (
     <div>
       <App socket={socket} ingameToken={ingameToken} setIngameToken={setIngameToken}/>
-      <ReadyPlayers socket={socket} ingameToken={ingameToken} />
+      <ReadyPlayers socket={socket} setGameToken={setGameToken} ingameToken={ingameToken} />
       <Chatbox socket={socket} />
       <button className="exit-game-button" onClick={onExitGame}>Leave Game</button>
       <button className="login-button" onClick={onLogout}>Logout</button>

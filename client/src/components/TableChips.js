@@ -21,11 +21,14 @@ function TableChips({ socket }) {
                 //if sum of tableChips and sum of numPlayers is the same as last cycle, a player has checked
                 let newTotalChips = retrievedMessage.chips.reduce((a, b) => a + b, 0)
                 let newTotalNumPlayers = retrievedMessage.num_players_ingame
+                //boolean values denoting whether or not totalChips and totalNumPlayers remain the same between renders
+                let totalChips_stagnant = (newTotalChips === totalChips.current)
+                let totalNumPlayers_stagnant = (newTotalNumPlayers === totalNumPlayers.current)
 
                 if (newTotalChips > totalChips.current && totalNumPlayers.current > 1) {
                     play_chips_audio.current.play()
                 }
-                else if (newTotalChips === totalChips.current && newTotalNumPlayers === totalNumPlayers.current && newTotalNumPlayers > 1) {
+                else if (totalChips_stagnant && totalNumPlayers_stagnant && newTotalNumPlayers > 1 && retrievedMessage.current_turn !== -1) {
                     check_audio.current.play()
                 }
 

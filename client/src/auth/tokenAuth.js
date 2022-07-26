@@ -1,4 +1,4 @@
-const tokenAuth = ((socket, loginToken, setLoginToken, gameToken, setGameToken, ingameToken, setIngameToken) => {
+const tokenAuth = ((socket, loginToken, setLoginToken, gameToken, setGameToken, ingameToken, setIngameToken, adminToken, setAdminToken) => {
     const login_token_unparsed = sessionStorage.getItem('login-token')
     const login_token_parsed = JSON.parse(login_token_unparsed)
     const game_token_unparsed = sessionStorage.getItem('game-token')
@@ -47,7 +47,23 @@ const tokenAuth = ((socket, loginToken, setLoginToken, gameToken, setGameToken, 
             if (retrievedMessage.auth === 0 || !loginToken) {
                 setIngameToken({})
                 sessionStorage.removeItem("ingame-token")
-                alert('Invalid ingame token. Please ingame again.')
+                alert('Invalid ingame token. Please try again.')
+            }
+            else {
+                console.log("Good auth.")
+            }
+        })
+    }
+
+    //authenticates the admin token, also removes token if login token does not exist
+    function authAdminToken() {
+        fetch('http://localhost:3080/auth_admin_token', {method: 'POST', body: JSON.stringify({token: login_token_parsed?.token}), headers: token_headers})
+        .then(res => res.json())
+        .then((retrievedMessage) => {
+            if (retrievedMessage.auth === 0 || !loginToken) {
+                setAdminToken({})
+                sessionStorage.removeItem("admin-token")
+                alert('Invalid admin token. Why are you here?')
             }
             else {
                 console.log("Good auth.")
@@ -56,6 +72,10 @@ const tokenAuth = ((socket, loginToken, setLoginToken, gameToken, setGameToken, 
     }
 
     //authenticates in this order for less redundancy (particularly with sending ws auth)
+    if (adminToken) {
+        authAdminToken()
+    }
+
     if (ingameToken) {
         authIngameToken()
     }
