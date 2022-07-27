@@ -14,6 +14,7 @@ class UserRepository {
             game_token TEXT NOT NULL,
             ingame_token TEXT NOT NULL,
             is_admin BIT NOT NULL,
+            wins INTEGER DEFAULT 0 NOT NULL,
             chips_bank INTEGER DEFAULT 10000 NOT NULL,
             chips_useable INTEGER DEFAULT 0 NOT NULL)`
         return this.dao.run(sql)
@@ -118,6 +119,11 @@ class UserRepository {
     updateChipsUseable(new_amount, username) {
         return this.dao.run(`UPDATE users SET chips_useable = ? 
             WHERE username=?`, [new_amount, username])
+    }
+
+    //increments number of wins for given username by 1
+    incrementWins(username) {
+        return this.dao.run(`UPDATE users SET wins = wins + 1 WHERE username=?`, [username])
     }
 }
 

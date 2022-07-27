@@ -1,12 +1,14 @@
 import './PlayerSlot.css';
 import PlayerChip from './PlayerChip';
-import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react';
+import Achievements from './Achievements';
 import Timer from './Timer';
 
 //currPlayer has parameters username, card1, card2, inUse, playerChips
 //inUse doubles as a player index for timer (i.e. 1-10)
-function PlayerSlot({ socket, currPlayer, winner, handStrength }) {
+function PlayerSlot({ socket, currPlayer, winner, handStrength, achievements }) {
   const [glow, setGlow] = useState(0)
+  console.log(achievements)
 
   useEffect(() => {
     setGlow(winner)
@@ -21,6 +23,9 @@ function PlayerSlot({ socket, currPlayer, winner, handStrength }) {
         <div className="card-slot2">
           <img src={currPlayer.card2} className="card" alt="" />
         </div>
+        <Achievements serial="0" inUse={achievements[0]} />
+        <Achievements serial="1" inUse={achievements[1]} />
+        <Achievements serial="2" inUse={achievements[2]} />
         <h6 className="username">{currPlayer.username}</h6>
         <PlayerChip chips={currPlayer.playerChips} />
         <div className="hand_strength_container" style={{visibility: (handStrength.length === 0) ? "hidden" : "visible"}}>

@@ -10,6 +10,7 @@ function PlayerSlots({ socket, setIngameToken }) {
     const [playerChips, setPlayerChips] = useState([]);
     const [winners, setWinners] = useState(Array(MAX_PLAYERS).fill(0));
     const [handStrengths, setHandStrengths] = useState([]);
+    const [achievements, setAchievements] = useState([]);
     const playerList = useRef([]);
     //index of current client (i.e. user's controllable player character)
     const clientIndex = useRef(-1);
@@ -63,6 +64,24 @@ function PlayerSlots({ socket, setIngameToken }) {
       hideHandStrengths()
     }, []);
 
+    //calls achievements API to receive boolean array denoting which users have which achievements
+    const callbackAchievements = useCallback(() => {
+      function getAchievementsState() {
+        fetch('http://localhost:3080/achievements')
+          .then(res => res.json())
+          .then((retrievedMessage) => {
+            let new_achievements = []
+            for (let i = 0; i < retrievedMessage.achievements.length; i++) {
+              new_achievements.push(retrievedMessage.achievements[i].achievements)
+            }
+
+            setAchievements(new_achievements)
+            console.log(new_achievements)
+          })
+      }
+  
+      getAchievementsState()
+    }, [])
 
     const callbackPlayerChipsState = useCallback(() => {
       function getPlayerChipsState() {
@@ -141,7 +160,8 @@ function PlayerSlots({ socket, setIngameToken }) {
     useEffect(() => {
         callbackPlayerState()
         callbackPlayerChipsState()
-    }, [callbackPlayerState, callbackPlayerChipsState])
+        callbackAchievements()
+    }, [callbackPlayerState, callbackAchievements, callbackPlayerChipsState])
 
     useEffect(() => {
         console.log("Player event listeners added!")
@@ -152,6 +172,10 @@ function PlayerSlots({ socket, setIngameToken }) {
                 case "player":
                     callbackPlayerState();
                     callbackPlayerChipsState();
+                    callbackAchievements();
+                    break;
+                case "achievement":
+                    callbackAchievements();
                     break;
                 case "first_turn":
                     callbackPlayerState();
@@ -191,40 +215,59 @@ function PlayerSlots({ socket, setIngameToken }) {
         socket.addEventListener('message', handlePlayers)
 
         return () => { socket.removeEventListener('message', handlePlayers) }
-    }, [socket, callbackPlayerState, callbackIngameToken, callbackPlayerChipsState, callbackShowWinners, callbackResetWinners, callbackShowHandStrengths, callbackHideHandStrengths]);
+    }, [socket, callbackAchievements, callbackPlayerState, callbackIngameToken, callbackPlayerChipsState, callbackShowWinners, callbackResetWinners, callbackShowHandStrengths, callbackHideHandStrengths]);
 
     return (
         <div>
             <PlayerSlot currPlayer={(players.length < 1) ? {inUse:0} : {username:players[0].username, inUse: 1,
                         card1: images.get(players[0].card1), card2: images.get(players[0].card2), playerChips: playerChips[0]}}
-                        socket={socket} winner={winners[0]} handStrength={(handStrengths.length < 1) ? '' : handStrengths[0]}/>
+                        socket={socket} winner={winners[0]} handStrength={(handStrengths.length < 1) ? '' : handStrengths[0]} 
+                        achievements={(achievements.length < 1) ? [] : achievements[0]} />
+
             <PlayerSlot currPlayer={(players.length < 2) ? {inUse:0} : {username:players[1].username, inUse: 2,
                         card1: images.get(players[1].card1), card2: images.get(players[1].card2), playerChips: playerChips[1]}}
-                        socket={socket} winner={winners[1]} handStrength={(handStrengths.length < 1) ? '' : handStrengths[1]} />
+                        socket={socket} winner={winners[1]} handStrength={(handStrengths.length < 2) ? '' : handStrengths[1]} 
+                        achievements={(achievements.length < 2) ? [] : achievements[1]} />
+
             <PlayerSlot currPlayer={(players.length < 3) ? {inUse:0} : {username:players[2].username, inUse: 3,
                         card1: images.get(players[2].card1), card2: images.get(players[2].card2), playerChips: playerChips[2]}}
-                        socket={socket} winner={winners[2]} handStrength={(handStrengths.length < 1) ? '' : handStrengths[2]} />
+                        socket={socket} winner={winners[2]} handStrength={(handStrengths.length < 3) ? '' : handStrengths[2]} 
+                        achievements={(achievements.length < 3) ? [] : achievements[2]} />
+
             <PlayerSlot currPlayer={(players.length < 4) ? {inUse:0} : {username:players[3].username, inUse: 4,
                         card1: images.get(players[3].card1), card2: images.get(players[3].card2), playerChips: playerChips[3]}}
-                        socket={socket} winner={winners[3]} handStrength={(handStrengths.length < 1) ? '' : handStrengths[3]} />
+                        socket={socket} winner={winners[3]} handStrength={(handStrengths.length < 4) ? '' : handStrengths[3]} 
+                        achievements={(achievements.length < 4) ? [] : achievements[3]} />
+
             <PlayerSlot currPlayer={(players.length < 5) ? {inUse:0} : {username:players[4].username, inUse: 5,
                         card1: images.get(players[4].card1), card2: images.get(players[4].card2), playerChips: playerChips[4]}}
-                        socket={socket} winner={winners[4]} handStrength={(handStrengths.length < 1) ? '' : handStrengths[4]} />
+                        socket={socket} winner={winners[4]} handStrength={(handStrengths.length < 5) ? '' : handStrengths[4]} 
+                        achievements={(achievements.length < 5) ? [] : achievements[4]} />
+
             <PlayerSlot currPlayer={(players.length < 6) ? {inUse:0} : {username:players[5].username, inUse: 6,
                         card1: images.get(players[5].card1), card2: images.get(players[5].card2), playerChips: playerChips[5]}}
-                        socket={socket} winner={winners[5]} handStrength={(handStrengths.length < 1) ? '' : handStrengths[5]} />
+                        socket={socket} winner={winners[5]} handStrength={(handStrengths.length < 6) ? '' : handStrengths[5]} 
+                        achievements={(achievements.length < 6) ? [] : achievements[5]} />
+
             <PlayerSlot currPlayer={(players.length < 7) ? {inUse:0} : {username:players[6].username, inUse: 7,
                         card1: images.get(players[6].card1), card2: images.get(players[6].card2), playerChips: playerChips[6]}}
-                        socket={socket} winner={winners[6]} handStrength={(handStrengths.length < 1) ? '' : handStrengths[6]} />
+                        socket={socket} winner={winners[6]} handStrength={(handStrengths.length < 7) ? '' : handStrengths[6]} 
+                        achievements={(achievements.length < 7) ? [] : achievements[6]} />
+
             <PlayerSlot currPlayer={(players.length < 8) ? {inUse:0} : {username:players[7].username, inUse: 8,
                         card1: images.get(players[7].card1), card2: images.get(players[7].card2), playerChips: playerChips[7]}}
-                        socket={socket} winner={winners[7]} handStrength={(handStrengths.length < 1) ? '' : handStrengths[7]} />
+                        socket={socket} winner={winners[7]} handStrength={(handStrengths.length < 8) ? '' : handStrengths[7]} 
+                        achievements={(achievements.length < 8) ? [] : achievements[7]} />
+
             <PlayerSlot currPlayer={(players.length < 9) ? {inUse:0} : {username:players[8].username, inUse: 9,
                         card1: images.get(players[8].card1), card2: images.get(players[8].card2), playerChips: playerChips[8]}}
-                        socket={socket} winner={winners[8]} handStrength={(handStrengths.length < 1) ? '' : handStrengths[8]} />
+                        socket={socket} winner={winners[8]} handStrength={(handStrengths.length < 9) ? '' : handStrengths[8]} 
+                        achievements={(achievements.length < 9) ? [] : achievements[8]} />
+
             <PlayerSlot currPlayer={(players.length < 10) ? {inUse:0} : {username:players[9].username, inUse: 10,
                         card1: images.get(players[9].card1), card2: images.get(players[9].card2), playerChips: playerChips[9]}}
-                        socket={socket} winner={winners[9]} handStrength={(handStrengths.length < 1) ? '' : handStrengths[9]} />
+                        socket={socket} winner={winners[9]} handStrength={(handStrengths.length < 10) ? '' : handStrengths[9]} 
+                        achievements={(achievements.length < 10) ? [] : achievements[9]} />
         </div>
     )
 }

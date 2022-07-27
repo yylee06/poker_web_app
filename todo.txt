@@ -2,14 +2,11 @@ Short Term:
     see how often playerslots re-renders during a game, big chance for optimization here through memoization
         -can use memo to reduce renders, likely useable in playerslots.js
 
-    add achievements
-        -own 10K chips in the bank
-        -win 3 games
-        -get a flush or higher
+    make curated_achievements_array cleaner
+    add hover-over text for achievements
 
     do more testing w/ 2 and 3 players, closed-circuit (i.e. chips are known)
 
-    when user has 0 chips, remove game token
 
 
 

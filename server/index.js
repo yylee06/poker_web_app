@@ -4,6 +4,7 @@ const AppDAO = require('./dao');
 const crypto = require("crypto")
 const cors = require('cors');
 const UserRepository = require('./user_repository');
+const AchievementRepository = require('./achievement_repository');
 const { resolve } = require('path');
 const bodyParser = require('body-parser');
 const Deck = require('./deck');
@@ -71,9 +72,23 @@ wss.on('connection', function connection(client) {
 });
 
 //----connects to database----//
-const dao = new AppDAO('./server/users.sqlite3')
-const userRepo = new UserRepository(dao)
+const user_dao = new AppDAO('./server/users.sqlite3')
+const userRepo = new UserRepository(user_dao)
+const achievement_dao = new AppDAO('./server/achievements.sqlite3')
+const achievementRepo = new AchievementRepository(achievement_dao)
 //----------------------------//
+
+//class used to pre-load all registered users and their achievements directly from db
+class AchievementsMap {
+    constructor() {
+        this.usernames = {};
+        this.saveUsername = this.saveUsername.bind(this)
+    }
+
+    saveUsername(username, achievements) {
+        this.usernames[username] = achievements
+    }
+}
 
 //array of usernames currently in the game
 let playing_users = [];
@@ -126,6 +141,10 @@ let button_index = -1;
 let game_running = false;
 //array of users in queue to leave the game (flushed at the start of every new game)
 let leaving_users = [];
+//pre-loaded map of all users and their achievements (from db)
+let achievements_map = new AchievementsMap()
+//curated array of achievements to be sent in json form to client to display achievements
+let curated_achievements_array = [];
 //working timer object, holds turn timer and current player (in case player exits browser)
 //timer set to -1 initially to not trigger default action, used for server-side turn detection
 let working_timer = {timer: -1, current_actor: ''}
@@ -143,6 +162,7 @@ setInterval(() => {
                     playing_users.splice(player_index, 1)
                     playing_chips.splice(player_index, 1)
                     removeFromReadyPlayers(key)
+                    removeFromCuratedAchievementsArray(key)
 
                     wss.clients.forEach(function each(client) {
                         client.send(JSON.stringify({event: "player"}))
@@ -171,6 +191,57 @@ setInterval(() => {
         
 }, 1000);
 
+function preloadAchievementsMap() {
+    achievementRepo.getAll()
+        .then((retrievedUsers) => {
+            retrievedUsers.forEach((retrievedUser) => {
+                achievements_map.saveUsername(retrievedUser.username, [retrievedUser.wealthy, retrievedUser.talented, retrievedUser.stacked_deck])
+            })
+        })
+}
+
+//function to be called when user leaves game, user is removed from achievements array
+function removeFromCuratedAchievementsArray(username) {
+    for (let i = 0; i < curated_achievements_array.length; i++) {
+        if (curated_achievements_array[i].username === username) {
+            curated_achievements_array.splice(i, 1)
+        }
+    }
+}
+
+//function to be called when user joins game, user is added to the achievements array
+function addToCuratedAchievementsArray(username) {
+    curated_achievements_array.push({username: username, achievements: achievements_map.usernames[username]})
+}
+
+//is_added is a boolean variable, true if achievement is given, false if achievement is taken away
+function updateAchievement(achievement, username, is_added) {
+    switch(achievement) {
+        case "wealthy":
+            achievementRepo.updateAchievementWealthy(is_added, username)
+            achievements_map.usernames[username][0] = is_added
+            break;
+        case "talented":
+            achievementRepo.updateAchievementTalented(is_added, username)
+            achievements_map.usernames[username][1] = is_added
+            break;
+        case "stacked_deck":
+            achievementRepo.updateAchievementStackedDeck(is_added, username)
+            achievements_map.usernames[username][2] = is_added
+            break;
+        default:
+    }
+
+    let player_index = playing_users.indexOf(username)
+    if (player_index > -1) {
+        curated_achievements_array[player_index] = achievements_map.usernames[username]
+
+        wss.clients.forEach(function each(client) {
+            client.send(JSON.stringify({event: "achievement"}))
+        })   
+    }
+}
+
 //sets highest_bet to parameterized value
 function setHighestBet(default_value) {
     highest_bet = default_value
@@ -181,6 +252,15 @@ function purgeDisplayedHandStrengths() {
     for (let i = 0; i < players_ingame.length; i++) {
         if (players_ingame[i] !== 1) {
             displayed_hand_strengths[i] = ''
+        }
+    }
+}
+
+//function called during showdown to see if any user achieves a strong hand (i.e. flush+ to get an achievement)
+function checkIfGoodHand(hand_strengths) {
+    for (let i = 0; i < playing_users.length; i++) {
+        if (hand_strengths[i] === "SF" || hand_strengths[i] === "4" || hand_strengths[i] === "32" || hand_strengths[i] === "F") {
+            updateAchievement('stacked_deck', playing_users[i], 1)
         }
     }
 }
@@ -213,6 +293,7 @@ function reorganizePlayers() {
             playing_users.splice(invalid_player, 1)
             playing_chips.splice(invalid_player, 1)
             removeFromReadyPlayers(invalid_player)
+            removeFromCuratedAchievementsArray(invalid_player)
         }
     }
 
@@ -225,6 +306,7 @@ function reorganizePlayers() {
             while (leaving_users.length > 0) {
                 let leaving_user_index = leaving_users.pop()
                 removeFromReadyPlayers(playing_users[leaving_user_index])
+                removeFromCuratedAchievementsArray(playing_users[leaving_user_index])
                 playing_users.splice(leaving_user_index, 1)
                 playing_chips.splice(leaving_user_index, 1)
             }
@@ -391,7 +473,17 @@ function calculateWinnings() {
     //sends winner(s) to client for glow visual effect
     wss.clients.forEach(function each(client) {
         client.send(JSON.stringify({event: "winner", winner: winner}))
-    })    
+    })
+    
+    //increments number of wins for user
+    userRepo.incrementWins(winner)
+        .then(() => userRepo.getByUsername(winner))
+        .then((retrievedUser) => {
+            //checks if user needs achievement for 3+ wins
+            if (retrievedUser.wins === 3) {
+                updateAchievement('talented', winner, 0)
+            }
+        })
 
     //calculate side pots
     while (side_pots.length > 0) {
@@ -771,6 +863,9 @@ function setupNextRound() {
                 wss.clients.forEach(function each(client) {
                     client.send(JSON.stringify({event: "showdown", hand_strengths: [...displayed_hand_strengths]}))
                 })
+
+                //checking all hands to see if user gets the stacked_deck achievement
+                checkIfGoodHand(displayed_hand_strengths)
                 calculateWinnings()
  
                 setTimeout(setupFirstRound, 1500)
@@ -799,6 +894,11 @@ function checkUsersTableExists() {
     return userRepo.tableExists('users')
 }
 
+//checks if the achievements table exists
+function checkAchievementsTableExists() {
+    return achievementRepo.tableExists('achievements')
+}
+
 //checks if a user with username exists
 function checkUserExists(username) {
     return userRepo.usernameExists(username)
@@ -812,20 +912,22 @@ function addNewUser(username, password, is_admin) {
     return userRepo.createUser(username, password, login_token, game_token, ingame_token, is_admin)
 }
 
-//returns user with given username
-function getUserByUsername(username) {
-    return userRepo.getByUsername(username)
-}
-
 //deletes the users table (ONLY FOR TESTING)
 function deleteUsersTable() {
     userRepo.dropUsersTable()
 }
 
-//deletes all users from the database (ONLY FOR TESTING)
+//deletes the achievements table (ONLY FOR TESTING)
+function deleteAchievementsTable() {
+    achievementRepo.dropAchievementsTable()
+}
+
+//deletes all users from the databases (ONLY FOR TESTING)
 function deleteAllUsers() {
     userRepo.deleteAllUsers()
     userRepo.resetSequencing()
+    achievementRepo.deleteAllUsers()
+    achievementRepo.resetSequencing()
 }
 
 //gets all users
@@ -846,8 +948,8 @@ function getAllUsers() {
 }
 //---------------------------------------------------------------//
 
-//----function to initialize new users table----//
-function initTable() {
+//----function to initialize new tables----//
+function initTables() {
     userRepo.createTable()
         .then(() => {
             const users = [
@@ -868,6 +970,11 @@ function initTable() {
             }))
             resolve('success')
         })
+        .then(() => achievementRepo.createTable())
+        .then(() => {
+            achievementRepo.addUser('ylee')
+            achievementRepo.addUser('Basil')
+        })
         .catch((err) => {
             console.log('Error: ')
             console.log(JSON.stringify(err))
@@ -875,11 +982,11 @@ function initTable() {
 }
 //----------------------------------------------//
 
-//----checks if users table exists, else creates new users table----//
+//----checks if users and achievements tables exist, else creates new users and achievements tables----//
 async function checkTable() {
     const tableStatus = await checkUsersTableExists()
     if (tableStatus['COUNT(*)'] == 0) {
-        initTable()
+        initTables()
         console.log('Users table does not exist, creating new table.')
     }
 }
@@ -896,9 +1003,24 @@ async function checkIfUserExists(username) {
     }
 }//----------------------------//
 
+
+
+
+
+
+
 //deleteUsersTable()
+//deleteAchievementsTable()
 //deleteAllUsers()
 checkTable()
+preloadAchievementsMap()
+
+
+
+
+
+
+
 
 server.listen(PORT, () => {
     console.log(`Server listening on ${PORT}`);
@@ -957,6 +1079,7 @@ app.post("/logout", cors(), (req, res) => {
                 }
 
                 removeFromReadyPlayers(retrievedUser.username)
+                removeFromCuratedAchievementsArray(retrievedUser.username)
                 res.status(201).json({message: `User has successfully logged out.`, auth: 1})
             }
             else {
@@ -980,6 +1103,7 @@ app.post("/register", cors(), (req, res) => {
         .catch((err) => {
             res.status(201).json({message: `User "${user.username}" has been created.`, auth: 1})
             addNewUser(user.username, user.password, 0)
+            achievementRepo.addUser(user.username)
         })
 });
 
@@ -1020,10 +1144,18 @@ app.post("/withdraw", cors(), (req, res) => {
                 userRepo.updateChipsBank(new_bank, retrievedUser.username)
                     .then(() => {
                         userRepo.updateChipsUseable(new_useable, retrievedUser.username)
+
                         res.status(201).json({message: `Chips withdrawn.`, amount: new_bank, auth: 1})
+
+                        //if user has less than 10K chips in the bank, they are stripped of the wealthy achievement
+                        if (retrievedUser.chips_bank < 10001) {
+                            updateAchievement('wealthy', retrievedUser.username, 0)
+                        }
+
                         resolve('success')
                     })
                     .catch((err) => {
+                        console.log(err)
                         res.status(200).json({message: `Error: Chips bank could not be updated.`, auth: 1})
                     })
             }
@@ -1047,10 +1179,18 @@ app.post("/deposit", cors(), (req, res) => {
                 userRepo.updateChipsBank(new_bank, retrievedUser.username)
                     .then(() => {
                         userRepo.updateChipsUseable(new_useable, retrievedUser.username)
+
                         res.status(201).json({message: `Chips deposited.`, amount: new_useable, auth: 1})
+
+                        //if user has more than 10K chips in the bank, they are awarded the wealthy achievement
+                        if (retrievedUser.chips_bank > 10000) {
+                            updateAchievement('wealthy', retrievedUser.username, 1)
+                        }
+
                         resolve('success')
                     })
                     .catch((err) => {
+                        console.log(err)
                         res.status(200).json({message: `Error: Chips bank could not be updated.`, auth: 1})
                     })
             }
@@ -1086,6 +1226,7 @@ app.post("/join_game", cors(), (req, res) => {
 
                 playing_users.push(retrievedUser.username)
                 playing_chips.push(retrievedUser.chips_useable)
+                addToCuratedAchievementsArray(retrievedUser.username)
 
                 //200ms delay set to avoid any incorrect state changes in client, likely to run fine without delay if needed
                 setTimeout(() => {
@@ -1129,6 +1270,7 @@ app.post("/exit_game", cors(), (req, res) => {
                         client.send(JSON.stringify({event: "player"}))
                     })
                     removeFromReadyPlayers(retrievedUser.username)
+                    removeFromCuratedAchievementsArray(retrievedUser.username)
                     res.status(201).json({message: "user has left the game.", auth: 1})
                 }
             }
@@ -1602,6 +1744,7 @@ app.post("/force_logout", cors(), (req, res) => {
                             playing_users.splice(player_index, 1)
                             playing_chips.splice(player_index, 1)
                             removeFromReadyPlayers(user_request.username)
+                            removeFromCuratedAchievementsArray(user_request.username)
 
                             wss.clients.forEach(function each(client) {
                                 client.send(JSON.stringify({event: "player"}))
@@ -1623,6 +1766,10 @@ app.post("/force_logout", cors(), (req, res) => {
             console.log(err)
             res.status(200).json({message: "Error: Invalid login token."})
         })
+})
+
+app.get("/achievements", (req, res) => {
+    res.status(201).json({achievements: [...curated_achievements_array]})
 })
 
 app.get("/highest_bet", (req, res) => {
