@@ -104,9 +104,7 @@
     width: 30px;
     height: 30px;
     position: absolute;
-    border-radius: 1px;
-    border: 1px solid;
-    border-color: whitesmoke;
+    border-radius: 5px;
     z-index: 3;
     transform: translateX(190px) translateY(-18px);
 }
@@ -115,15 +113,86 @@
     width: 30px;
     height: 30px;
     position: absolute;
-    border-radius: 2px;
-    border: 1px solid;
-    border-color: whitesmoke;
+    border-radius: 5px;
     z-index: 3;
     transform: translateX(230px) translateY(-18px);
+}
+
+.achievement-slot-0 .tooltiptext-achievement {
+    visibility: hidden;
+    width: 120px;
+    background-color: black;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px 0;
+    position: absolute;
+    font-size: 10px;
+    z-index: 4;
+    top: 100%;
+    left: 50%;
+    margin-top: 5px;
+    margin-left: -60px;
+    opacity: 0;
+    transition: opacity 1s;
+}
+
+.achievement-slot-1 .tooltiptext-achievement {
+    visibility: hidden;
+    width: 120px;
+    background-color: black;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px 0;
+    position: absolute;
+    font-size: 10px;
+    z-index: 4;
+    top: 100%;
+    left: 50%;
+    margin-top: 5px;
+    margin-left: -60px;
+    opacity: 0;
+    transition: opacity 1s;
+}
+
+.achievement-slot-2 .tooltiptext-achievement {
+    visibility: hidden;
+    width: 120px;
+    background-color: black;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px 0;
+    position: absolute;
+    font-size: 10px;
+    z-index: 4;
+    top: 100%;
+    left: 50%;
+    margin-top: 5px;
+    margin-left: -60px;
+    opacity: 0;
+    transition: opacity 1s;
+}
+
+.achievement-slot-0:hover .tooltiptext-achievement {
+    visibility: visible;
+    opacity: 1;
+}
+
+.achievement-slot-1:hover .tooltiptext-achievement {
+    visibility: visible;
+    opacity: 1;
+}
+
+.achievement-slot-2:hover .tooltiptext-achievement {
+    visibility: visible;
+    opacity: 1;
 }
 
 .timer_container {
     bottom: 2px;
     position: absolute;
 }
+
 

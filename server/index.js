@@ -143,6 +143,8 @@ let game_running = false;
 let leaving_users = [];
 //pre-loaded map of all users and their achievements (from db)
 let achievements_map = new AchievementsMap()
+//array of objects with keys username and achievements, used for indexing of curated_achievements_array
+let achievements_array = [];
 //curated array of achievements to be sent in json form to client to display achievements
 let curated_achievements_array = [];
 //working timer object, holds turn timer and current player (in case player exits browser)
@@ -162,7 +164,7 @@ setInterval(() => {
                     playing_users.splice(player_index, 1)
                     playing_chips.splice(player_index, 1)
                     removeFromReadyPlayers(key)
-                    removeFromCuratedAchievementsArray(key)
+                    removeFromAchievementsArray(key)
 
                     wss.clients.forEach(function each(client) {
                         client.send(JSON.stringify({event: "player"}))
@@ -201,17 +203,20 @@ function preloadAchievementsMap() {
 }
 
 //function to be called when user leaves game, user is removed from achievements array
-function removeFromCuratedAchievementsArray(username) {
-    for (let i = 0; i < curated_achievements_array.length; i++) {
-        if (curated_achievements_array[i].username === username) {
+function removeFromAchievementsArray(username) {
+    for (let i = 0; i < achievements_array.length; i++) {
+        if (achievements_array[i].username === username) {
+            achievements_array.splice(i, 1)
             curated_achievements_array.splice(i, 1)
         }
     }
 }
 
 //function to be called when user joins game, user is added to the achievements array
-function addToCuratedAchievementsArray(username) {
-    curated_achievements_array.push({username: username, achievements: achievements_map.usernames[username]})
+function addToAchievementsArray(username) {
+    achievements_array.push({username: username, achievements: achievements_map.usernames[username]})
+    curated_achievements_array.push(achievements_map.usernames[username])
+
 }
 
 //is_added is a boolean variable, true if achievement is given, false if achievement is taken away
@@ -234,6 +239,7 @@ function updateAchievement(achievement, username, is_added) {
 
     let player_index = playing_users.indexOf(username)
     if (player_index > -1) {
+        achievements_array[player_index] = {username: username, achievements: achievements_map.usernames[username]}
         curated_achievements_array[player_index] = achievements_map.usernames[username]
 
         wss.clients.forEach(function each(client) {
@@ -293,7 +299,7 @@ function reorganizePlayers() {
             playing_users.splice(invalid_player, 1)
             playing_chips.splice(invalid_player, 1)
             removeFromReadyPlayers(invalid_player)
-            removeFromCuratedAchievementsArray(invalid_player)
+            removeFromAchievementsArray(invalid_player)
         }
     }
 
@@ -306,7 +312,7 @@ function reorganizePlayers() {
             while (leaving_users.length > 0) {
                 let leaving_user_index = leaving_users.pop()
                 removeFromReadyPlayers(playing_users[leaving_user_index])
-                removeFromCuratedAchievementsArray(playing_users[leaving_user_index])
+                removeFromAchievementsArray(playing_users[leaving_user_index])
                 playing_users.splice(leaving_user_index, 1)
                 playing_chips.splice(leaving_user_index, 1)
             }
@@ -1079,7 +1085,7 @@ app.post("/logout", cors(), (req, res) => {
                 }
 
                 removeFromReadyPlayers(retrievedUser.username)
-                removeFromCuratedAchievementsArray(retrievedUser.username)
+                removeFromAchievementsArray(retrievedUser.username)
                 res.status(201).json({message: `User has successfully logged out.`, auth: 1})
             }
             else {
@@ -1226,7 +1232,7 @@ app.post("/join_game", cors(), (req, res) => {
 
                 playing_users.push(retrievedUser.username)
                 playing_chips.push(retrievedUser.chips_useable)
-                addToCuratedAchievementsArray(retrievedUser.username)
+                addToAchievementsArray(retrievedUser.username)
 
                 //200ms delay set to avoid any incorrect state changes in client, likely to run fine without delay if needed
                 setTimeout(() => {
@@ -1270,7 +1276,7 @@ app.post("/exit_game", cors(), (req, res) => {
                         client.send(JSON.stringify({event: "player"}))
                     })
                     removeFromReadyPlayers(retrievedUser.username)
-                    removeFromCuratedAchievementsArray(retrievedUser.username)
+                    removeFromAchievementsArray(retrievedUser.username)
                     res.status(201).json({message: "user has left the game.", auth: 1})
                 }
             }
@@ -1744,7 +1750,7 @@ app.post("/force_logout", cors(), (req, res) => {
                             playing_users.splice(player_index, 1)
                             playing_chips.splice(player_index, 1)
                             removeFromReadyPlayers(user_request.username)
-                            removeFromCuratedAchievementsArray(user_request.username)
+                            removeFromAchievementsArray(user_request.username)
 
                             wss.clients.forEach(function each(client) {
                                 client.send(JSON.stringify({event: "player"}))

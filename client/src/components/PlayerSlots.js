@@ -70,13 +70,7 @@ function PlayerSlots({ socket, setIngameToken }) {
         fetch('http://localhost:3080/achievements')
           .then(res => res.json())
           .then((retrievedMessage) => {
-            let new_achievements = []
-            for (let i = 0; i < retrievedMessage.achievements.length; i++) {
-              new_achievements.push(retrievedMessage.achievements[i].achievements)
-            }
-
-            setAchievements(new_achievements)
-            console.log(new_achievements)
+            setAchievements(retrievedMessage.achievements)
           })
       }
   
