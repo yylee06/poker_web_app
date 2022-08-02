@@ -53,7 +53,7 @@ function TableChips({ socket }) {
     
         function handleTableChips(event) {
             const received_message = JSON.parse(event.data)
-            if (received_message.event === "next_turn" || received_message.event === "game_over") {
+            if (received_message.event === "next_turn" || received_message.event === "showdown" || received_message.event === "game_over") {
                 callbackTableChipsState()
             }
         }

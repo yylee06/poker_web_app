@@ -201,6 +201,7 @@ function PlayerSlots({ socket, setIngameToken }) {
                     callbackPlayerChipsState();
                     callbackResetWinners();
                     callbackHideHandStrengths();
+                    callbackAchievements();
                     break;
                 default:
             }

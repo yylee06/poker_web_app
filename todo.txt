@@ -3,6 +3,13 @@ Short Term:
         -can use memo to reduce renders, likely useable in playerslots.js
 
     do more testing w/ 2 and 3 players, closed-circuit (i.e. chips are known)
+        -2 players
+        -3 players
+
+    last action, calling does not show chips
+        -fixed?
+    split pots messed up
+        -fixed?
 
 
 

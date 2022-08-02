@@ -3,7 +3,7 @@ import React from 'react';
 import { useForm } from "react-hook-form"
 
 function Withdraw() {
-  const { register, handleSubmit, getValues } = useForm();
+  const { register, handleSubmit, getValues, reset } = useForm();
   const [show, setShow] = React.useState('');
   const [chips, setChips] = React.useState('0');
   const openForm = () => setShow(1);
@@ -44,7 +44,9 @@ function Withdraw() {
         else {
           alert('User does not have sufficient chips.');
         }
-    })
+      })
+      
+    reset()
   }
 
   return (

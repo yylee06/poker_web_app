@@ -184,7 +184,7 @@ setInterval(() => {
 //timer always running, reset to 30 decrementing every turn
 setInterval(() => {
     working_timer.timer -= 1
-    console.log(working_timer.timer)
+    //console.log(working_timer.timer)
 
     if (working_timer.timer === 0 && game_running) {
         //do default action, because time ran out
@@ -285,21 +285,21 @@ function removeFromReadyPlayers(username_to_remove) {
 function reorganizePlayers() {
     //removes all players with less than 20 chips
     function removeInvalidPlayers() {
-        let invalid_players = []
+        let invalid_players_indices = []
         playing_chips.forEach((element, index) => {
             if (element < BIG_BLIND) {
-                invalid_players.push(index)
+                invalid_players_indices.push(index)
             }
         });
 
         //reverse to remove all players in 1 pass of playing_users and playing_chips
-        invalid_players.reverse()
+        invalid_players_indices.reverse()
 
-        for (let invalid_player of invalid_players) {
-            playing_users.splice(invalid_player, 1)
-            playing_chips.splice(invalid_player, 1)
-            removeFromReadyPlayers(invalid_player)
-            removeFromAchievementsArray(invalid_player)
+        for (let invalid_player_index of invalid_players_indices) {
+            removeFromAchievementsArray(playing_users[invalid_player_index])
+            removeFromReadyPlayers(playing_users[invalid_player_index])
+            playing_users.splice(invalid_player_index, 1)
+            playing_chips.splice(invalid_player_index, 1)
         }
     }
 
@@ -447,6 +447,7 @@ function calculateSidePots() {
 //called at end of each game to calculate and distribute main and side pots
 function calculateWinnings() {
     function distributeWinnings(winner, earnings) {
+        console.log(winner, earnings)
         //index of winner in playing_users array
         let winner_index = playing_users.indexOf(winner)
 
@@ -487,9 +488,12 @@ function calculateWinnings() {
         .then((retrievedUser) => {
             //checks if user needs achievement for 3+ wins
             if (retrievedUser.wins === 3) {
-                updateAchievement('talented', winner, 0)
+                updateAchievement('talented', winner, 1)
             }
         })
+
+    //reverse side_pots to pop pots with largest number of participants first
+    side_pots.reverse()
 
     //calculate side pots
     while (side_pots.length > 0) {
@@ -874,7 +878,7 @@ function setupNextRound() {
                 checkIfGoodHand(displayed_hand_strengths)
                 calculateWinnings()
  
-                setTimeout(setupFirstRound, 1500)
+                setTimeout(setupFirstRound, 3500)
             }, 250)
     }
 }
@@ -1147,16 +1151,17 @@ app.post("/withdraw", cors(), (req, res) => {
             if (user_request.amount <= retrievedUser.chips_bank) {
                 const new_bank = retrievedUser.chips_bank - user_request.amount
                 const new_useable = retrievedUser.chips_useable + user_request.amount
+
+                //if user has less than 10K chips in the bank, they are stripped of the wealthy achievement
+                if (new_bank < 10001) {
+                    updateAchievement('wealthy', retrievedUser.username, 0)
+                }
+
                 userRepo.updateChipsBank(new_bank, retrievedUser.username)
                     .then(() => {
                         userRepo.updateChipsUseable(new_useable, retrievedUser.username)
 
                         res.status(201).json({message: `Chips withdrawn.`, amount: new_bank, auth: 1})
-
-                        //if user has less than 10K chips in the bank, they are stripped of the wealthy achievement
-                        if (retrievedUser.chips_bank < 10001) {
-                            updateAchievement('wealthy', retrievedUser.username, 0)
-                        }
 
                         resolve('success')
                     })
@@ -1182,18 +1187,16 @@ app.post("/deposit", cors(), (req, res) => {
             if (user_request.amount <= retrievedUser.chips_useable) {
                 const new_bank = retrievedUser.chips_bank + user_request.amount
                 const new_useable = retrievedUser.chips_useable - user_request.amount
+
+                //if user has more than 10K chips in the bank, they are awarded the wealthy achievement
+                if (new_bank > 10000) {
+                    updateAchievement('wealthy', retrievedUser.username, 1)
+                }
+
                 userRepo.updateChipsBank(new_bank, retrievedUser.username)
                     .then(() => {
                         userRepo.updateChipsUseable(new_useable, retrievedUser.username)
-
                         res.status(201).json({message: `Chips deposited.`, amount: new_useable, auth: 1})
-
-                        //if user has more than 10K chips in the bank, they are awarded the wealthy achievement
-                        if (retrievedUser.chips_bank > 10000) {
-                            updateAchievement('wealthy', retrievedUser.username, 1)
-                        }
-
-                        resolve('success')
                     })
                     .catch((err) => {
                         console.log(err)

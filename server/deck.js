@@ -482,72 +482,88 @@ class Deck {
         }
     }
 
-    //-----TESTING-----//
-    //straight_flush test - hand2
-    //const hand1 = ["C5", "D2"]
-    //const hand2 = ["CA", "CB"]
-    //const board = ["C6", "C7", "C8", "C9", "D5"]
+}
 
-    //four_of_a_kind test - hand2
-    //const hand1 = ["C2", "SA"]
-    //const hand2 = ["S3", "H3"]
-    //const board = ["D2", "H2", "C3", "D3", "S2"]
+//-----TESTING-----//
+//straight_flush test - hand2
+//const hand1 = ["C5", "D2"]
+//const hand2 = ["CA", "CB"]
+//const board = ["C6", "C7", "C8", "C9", "D5"]
 
-    //full_house test - hand1
-    //const hand1 = ["S1", "C1"]
-    //const hand2 = ["D8", "CA"]
-    //const board = ["C3", "C8", "CB", "D3", "S3"]
+//four_of_a_kind test - hand2
+//const hand1 = ["C2", "SA"]
+//const hand2 = ["S3", "H3"]
+//const board = ["D2", "H2", "C3", "D3", "S2"]
 
-    //flush test - hand1
-    //const hand1 = ["C2", "C1"]
-    //const hand2 = ["C7", "CA"]
-    //const board = ["C3", "C8", "CB", "D3", "S3"]
+//full_house test - hand1
+//const hand1 = ["S1", "C1"]
+//const hand2 = ["D8", "CA"]
+//const board = ["C3", "C8", "CB", "D3", "S3"]
 
-    //straight test - hand1
-    //const hand1 = ["HB", "HA"]
-    //const hand2 = ["C5", "CA"]
-    //const board = ["D7", "C8", "C9", "S6", "S3"]
+//flush test - hand1
+//const hand1 = ["C2", "C1"]
+//const hand2 = ["C7", "CA"]
+//const board = ["C3", "C8", "CB", "D3", "S3"]
 
-    //three_of_a_kind test - hand2
-    //const hand1 = ["D3", "H3"]
-    //const hand2 = ["D8", "S8"]
-    //const board = ["CC", "C8", "H4", "D3", "S2"]
+//straight test - hand1
+//const hand1 = ["HB", "HA"]
+//const hand2 = ["C5", "CA"]
+//const board = ["D7", "C8", "C9", "S6", "S3"]
 
-    //two_pair test - hand1
-    //const hand1 = ["SB", "S5"]
-    //const hand2 = ["H5", "H8"]
-    //const board = ["C3", "C8", "CB", "D7", "S5"]
+//straight test 2 - not viable straights
+//const hand1 = ["H9", "C2"]
+//const hand2 = ["S2", "D4"]
+//const board = ["CB", "SC", "DD", "S1", "C3"]
+//JQKA2
+//KA234
 
-    //pair test - hand1
-    //const hand1 = ["H8", "H2"]
-    //const hand2 = ["S3", "CA"]
-    //const board = ["C3", "C8", "HB", "D4", "HC"]
+//straight test 3 - not viable straights
+//const hand1 = ["D5", "DB"]
+//const hand2 = ["H2", "H3"]
+//const board = ["C6", "C7", "C9", "SA", "S4"]
 
-    //high_card test - hand2
-    //const hand1 = ["H3", "H6"]
-    //const hand2 = ["C9", "D1"]
-    //const board = ["D2", "D7", "S4", "DD", "SB"]
+//three_of_a_kind test - hand2
+//const hand1 = ["D3", "H3"]
+//const hand2 = ["D8", "S8"]
+//const board = ["CC", "C8", "H4", "D3", "S2"]
 
-    /*const hand1 = ["C8", "D6"]
-    const hand2 = ["S7", "H7"]
-    const hand3 = ["H3", "H6"]
-    const hand4 = ["D8", "S6"]
-    const hand5 = ["H8", "H6"]
-    const hand6 = ["SC", "CA"]
-    const board = ["D2", "D7", "S1", "DD", "SB"]
+//two_pair test - hand1
+//const hand1 = ["SB", "S5"]
+//const hand2 = ["H5", "H8"]
+//const board = ["C3", "C8", "CB", "D7", "S5"]
 
-    let current_names = ["ylee", "Basil", "drgnslyr", "dragongx3", "dogwarrior", "benlarosa"]
-    let current_hands = [hand1, hand2, hand3, hand4, hand5, hand6]
-    let current_players = []
+//pair test - hand1
+//const hand1 = ["H8", "H2"]
+//const hand2 = ["S3", "CA"]
+//const board = ["C3", "C8", "HB", "D4", "HC"]
 
-    for (let i = 0; i < 6; i++) {
-        current_players.push({
-            hand: current_hands[i],
-            user: current_names[i],
-            hand_strength: '',
-            high_rank: ''
-        })
-    }
+//high_card test - hand2
+//const hand1 = ["H3", "H6"]
+//const hand2 = ["C9", "D1"]
+//const board = ["D2", "D7", "S4", "DD", "SB"]
+
+/*const hand1 = ["C8", "D6"]
+const hand2 = ["S7", "H7"]
+const hand3 = ["H3", "H6"]
+const hand4 = ["D8", "S6"]
+const hand5 = ["H8", "H6"]
+const hand6 = ["SC", "CA"]
+const board = ["D2", "D7", "S1", "DD", "SB"]
+
+let current_names = ["ylee", "Basil", "drgnslyr", "dragongx3", "dogwarrior", "benlarosa"]
+let current_hands = [hand1, hand2, hand3, hand4, hand5, hand6]
+let current_players = []
+
+for (let i = 0; i < 6; i++) {
+    current_players.push({
+        hand: current_hands[i],
+        user: current_names[i],
+        hand_strength: '',
+        high_rank: ''
+    })
+}
+
+
 
     multiHandChecker(board, current_players)
     const sorted_players = multiHandSorter(current_players)
@@ -559,7 +575,29 @@ class Deck {
     userFolds('dragongx3', sorted_players)
     console.log(sorted_players)*/
 
-}
+/*
+const deck = new Deck();
+const players = []
+
+players.push({
+    hand: hand1,
+    user: "dog",
+    hand_strength: '',
+    high_rank: ''
+})
+
+players.push({
+    hand: hand2,
+    user: "cat",
+    hand_strength: '',
+    high_rank: ''
+})
+
+deck.multiHandChecker(board, players)
+console.log(players)
+*/
+
+
 
 
 //idea: create map of all hand + board combinations, later, sort based on rating of combination within each sub-bracket

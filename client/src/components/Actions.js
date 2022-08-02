@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useForm } from "react-hook-form"
 
 function Actions({ socket }) {
-    const { register, handleSubmit, getValues } = useForm();
+    const { register, handleSubmit, getValues, reset } = useForm();
     const [showRaiseForm, setShowRaiseForm] = useState(0);
     const [highestBet, setHighestBet] = useState(0);
     const [chipDifferential, setChipDifferential] = useState(0);
@@ -73,6 +73,9 @@ function Actions({ socket }) {
             .catch((err) => {
                 console.log(err)
             })
+        
+        reset()
+        closeRaiseForm()
     }
 
     function doAction(action) {

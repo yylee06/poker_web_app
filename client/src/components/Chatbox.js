@@ -7,7 +7,7 @@ function Chatbox({ socket }) {
   const [chatbox, setChatbox] = useState('Please be kind in chat! Or don\'t, I\'m just a sign!')
   const numLines = useRef(1)
   const messageDump = useRef('Please be kind in chat! Or don\'t, I\'m just a sign!')
-  const { register, handleSubmit, getValues } = useForm();
+  const { register, handleSubmit, getValues, reset } = useForm();
   const new_message_audio = useRef(new Audio(audiofiles.get('new_message')))
 
   const callbackChatbox = useCallback((message) => {
@@ -54,6 +54,8 @@ function Chatbox({ socket }) {
     fetch('http://localhost:3080/chat', {method: 'POST', body: JSON.stringify({token: token_parsed?.token, content: message.content}), headers: user_headers})
         .then((res) => res.json())
         .then((retrievedMessage) => console.log(retrievedMessage.message))
+
+    reset()
   }
 
   return (

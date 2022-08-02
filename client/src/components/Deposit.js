@@ -3,7 +3,7 @@ import { useState, useEffect} from 'react';
 import { useForm } from "react-hook-form"
 
 function Deposit() {
-  const { register, handleSubmit, getValues } = useForm();
+  const { register, handleSubmit, getValues, reset } = useForm();
   const [show, setShow] = useState(0);
   const [chips, setChips] = useState('0');
   const openForm = () => setShow(1);
@@ -45,6 +45,8 @@ function Deposit() {
           alert('User does not have sufficient chips.');
         }
     })
+
+    reset()
   }
 
   return (
