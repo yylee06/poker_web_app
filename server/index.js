@@ -265,7 +265,7 @@ function purgeDisplayedHandStrengths() {
 //function called during showdown to see if any user achieves a strong hand (i.e. flush+ to get an achievement)
 function checkIfGoodHand(hand_strengths) {
     for (let i = 0; i < playing_users.length; i++) {
-        if (hand_strengths[i] === "SF" || hand_strengths[i] === "4" || hand_strengths[i] === "32" || hand_strengths[i] === "F") {
+        if (hand_strengths[i] === "Straight Flush" || hand_strengths[i] === "Four of a Kind" || hand_strengths[i] === "Full House" || hand_strengths[i] === "Flush") {
             updateAchievement('stacked_deck', playing_users[i], 1)
         }
     }
@@ -447,7 +447,6 @@ function calculateSidePots() {
 //called at end of each game to calculate and distribute main and side pots
 function calculateWinnings() {
     function distributeWinnings(winner, earnings) {
-        console.log(winner, earnings)
         //index of winner in playing_users array
         let winner_index = playing_users.indexOf(winner)
 
@@ -581,7 +580,7 @@ function sendNextTurn() {
     let users_ingame = players_ingame.reduce((a, b) => a + b, 0)
     let users_all_in = all_in_users.reduce((a, b) => a + b, 0)
 
-    if ((users_ingame - users_all_in) <= 1 && actions.length === 0) {
+    if ((users_ingame - users_all_in) < 2 && actions.length === 0) {
         //current_turn set to -1, meaning no actions can be taken by anyone until the end of the game
         current_turn = -1
         showFormattedCards(true)
@@ -1023,7 +1022,7 @@ async function checkIfUserExists(username) {
 //deleteAchievementsTable()
 //deleteAllUsers()
 checkTable()
-preloadAchievementsMap()
+setTimeout(preloadAchievementsMap, 2000)
 
 
 
@@ -1061,6 +1060,7 @@ app.post("/login", cors(), (req, res) => {
             resolve('success')
         })
         .catch((err) => {
+            console.log(err)
             res.status(200).json({message: `User "${user.username}" is not in the database.`, auth: 0})
         })
 });
@@ -1114,6 +1114,9 @@ app.post("/register", cors(), (req, res) => {
             res.status(201).json({message: `User "${user.username}" has been created.`, auth: 1})
             addNewUser(user.username, user.password, 0)
             achievementRepo.addUser(user.username)
+
+            //adds to current achievements_map, only necessary for current server session
+            achievements_map.saveUsername(user.username, [0, 0, 0])
         })
 });
 
@@ -1126,6 +1129,7 @@ app.post("/show_chips_bank", cors(), (req, res) => {
             resolve('success')
         })
         .catch((err) => {
+            console.log(err)
             res.status(200).json({message: `Error: User does not exist.`, auth: 0})
         })
 })
@@ -1139,6 +1143,7 @@ app.post("/show_chips_useable", cors(), (req, res) => {
             resolve('success')
         })
         .catch((err) => {
+            console.log(err)
             res.status(200).json({message: `Error: User does not exist.`, auth: 0})
         })
 })
@@ -1175,6 +1180,7 @@ app.post("/withdraw", cors(), (req, res) => {
             }
         })
         .catch((err) => {
+            console.log(err)
             res.status(200).json({message: `Error: User does not exist.`, auth: 0})
         })
 })
@@ -1208,6 +1214,7 @@ app.post("/deposit", cors(), (req, res) => {
             }
         })
         .catch((err) => {
+            console.log(err)
             res.status(200).json({message: `Error: User does not exist.`, auth: 0})
         })
 })
@@ -1288,6 +1295,7 @@ app.post("/exit_game", cors(), (req, res) => {
             }
         })
         .catch((err) => {
+            console.log(err)
             res.status(200).json({message: "Error: Game token is invalid.", auth: 0})
         })
 })
@@ -1301,6 +1309,7 @@ app.post("/ingame_token", cors(), (req, res) => {
             res.status(201).json({auth: 1, token: retrievedUser.ingame_token})
         })
         .catch((err) => {
+            console.log(err)
             res.status(200).json({auth: 0, message: "Error: User does not exist to retrieve ingame token."})
         })
 })
@@ -1315,8 +1324,8 @@ app.post("/player_index", cors(), (req, res) => {
             res.status(201).json({index: user_index})
         })
         .catch((err) => {
+            console.log(err)
             res.status(200).json({index: -1})
-            console.log("Error: User attempting to retrieve player index does not have a valid login token.")
         })
 })
 
@@ -1345,10 +1354,10 @@ app.post("/players", cors(), (req, res) => {
                     temp_formatted_cards[player_index] = Array.from(shown_cards[player_index])
                 }
             }
-            res.status(201).json({players: [...playing_users], cards: [...temp_formatted_cards]})
+            res.status(201).json({players: [...playing_users], cards: [...temp_formatted_cards], calling_user: retrievedUser.username})
         })
         .catch((err) => {
-            res.status(201).json({players: [...playing_users], cards: [...temp_formatted_cards]})
+            res.status(201).json({players: [...playing_users], cards: [...temp_formatted_cards], calling_user: ''})
         })
 })
 
@@ -1388,10 +1397,6 @@ app.post("/toggle_game", cors(), (req, res) => {
                 client.send(JSON.stringify({event: "start/stop"}))
             })
         })
-        /*
-        .catch((err) => {
-            res.status(200).json({message: "User is not currently eligible to toggle the game status."})
-        })*/
 })
 
 app.post("/raise", cors(), (req, res) => {
@@ -1403,6 +1408,7 @@ app.post("/raise", cors(), (req, res) => {
             //only accept request from player who's turn it is, else send a message saying it's not your turn
             if (retrievedUser.username === playing_users[current_turn]) {
                 let new_useable = 0
+                let old_highest_bet = highest_bet
                 //all-in
                 if (user_request.amount >= (retrievedUser.chips_useable + table_chips[current_turn])) {
                     //new_useable does not need to be changed, as all-in means new_useable === 0
@@ -1422,7 +1428,10 @@ app.post("/raise", cors(), (req, res) => {
                 res.status(201).json({message: "You have raised.", auth: 1})
 
                 //user raised, therefore actions array must be refashioned around the current user
-                buildActionsArray(current_turn, 1)
+                //only creates new action array if this is a valid raise; otherwise does the same thing as calling
+                if (highest_bet > old_highest_bet) {
+                    buildActionsArray(current_turn, 1)
+                }
 
                 sendNextTurn()
             }

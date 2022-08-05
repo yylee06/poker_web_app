@@ -8,7 +8,6 @@ import Timer from './Timer';
 //inUse doubles as a player index for timer (i.e. 1-10)
 function PlayerSlot({ socket, currPlayer, winner, handStrength, achievements }) {
   const [glow, setGlow] = useState(0)
-  console.log(achievements)
 
   useEffect(() => {
     setGlow(winner)

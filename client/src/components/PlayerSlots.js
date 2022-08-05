@@ -101,6 +101,7 @@ function PlayerSlots({ socket, setIngameToken }) {
           .then((retrievedMessage) => {
             let current_players = [];
             let current_usernames = [];
+
             for (let i = 0; i < retrievedMessage.players.length; i++) {
               current_players[i] = {username: retrievedMessage.players[i], card1: retrievedMessage.cards[i][0], card2: retrievedMessage.cards[i][1]}
               current_usernames.push(current_players[i].username)
@@ -115,11 +116,16 @@ function PlayerSlots({ socket, setIngameToken }) {
 
             //refreshes playerList every API call, might be greedy?
             playerList.current = current_usernames
+
+            if (playerList.current.indexOf(retrievedMessage.calling_user) === -1) {
+              setIngameToken({})
+              sessionStorage.removeItem('ingame-token')
+            }
           })
         }
     
         getPlayerState()
-    }, [setPlayers])
+    }, [setPlayers, setIngameToken])
 
     //isValid is a boolean value such that if isValid === false, ingameToken is removed, if isValid === true, ingameToken is added
     const callbackIngameToken = useCallback((isValid) => {

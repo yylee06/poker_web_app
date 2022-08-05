@@ -6,11 +6,6 @@ Short Term:
         -2 players
         -3 players
 
-    last action, calling does not show chips
-        -fixed?
-    split pots messed up
-        -fixed?
-
 
 
 

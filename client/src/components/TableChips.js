@@ -15,6 +15,7 @@ function TableChips({ socket }) {
           fetch('http://localhost:3080/table_chips')
             .then(res => res.json())
             .then((retrievedMessage) => {
+                console.log(retrievedMessage.chips)
                 setTableChips(retrievedMessage.chips)
 
                 //find sum of tableChips, if larger than last sum, this means a player has called/raised

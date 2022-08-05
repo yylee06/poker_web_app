@@ -42,6 +42,7 @@ function Withdraw() {
           setChips(retrievedMessage.amount)
         }
         else {
+          console.log(retrievedMessage.message)
           alert('User does not have sufficient chips.');
         }
       })
