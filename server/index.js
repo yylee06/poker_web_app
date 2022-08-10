@@ -15,7 +15,7 @@ const BIG_BLIND = 20
 
 //sets up cors to accept requests from http://localhost:3000 only
 var corsOptions = {
-    origin: 'http://localhost:3000',
+    origin: 'https://yylee06.github.io',
     optionsSuccessStatus: 200
 }
 
