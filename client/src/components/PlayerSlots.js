@@ -67,7 +67,7 @@ function PlayerSlots({ socket, setIngameToken }) {
     //calls achievements API to receive boolean array denoting which users have which achievements
     const callbackAchievements = useCallback(() => {
       function getAchievementsState() {
-        fetch('http://localhost:3080/achievements')
+        fetch('http://54.91.205.171:3080/achievements')
           .then(res => res.json())
           .then((retrievedMessage) => {
             setAchievements(retrievedMessage.achievements)
@@ -79,7 +79,7 @@ function PlayerSlots({ socket, setIngameToken }) {
 
     const callbackPlayerChipsState = useCallback(() => {
       function getPlayerChipsState() {
-        fetch('http://localhost:3080/player_chips')
+        fetch('http://54.91.205.171:3080/player_chips')
           .then(res => res.json())
           .then((retrievedMessage) => {
             setPlayerChips(retrievedMessage.chips)
@@ -96,7 +96,7 @@ function PlayerSlots({ socket, setIngameToken }) {
     
         //sends login token, returns JSON object of players and respective cards (empty cards if not owned)
         function getPlayerState() {
-          fetch('http://localhost:3080/players', {method: 'POST', body: JSON.stringify({token: token_parsed?.token}), headers: player_headers})
+          fetch('http://54.91.205.171:3080/players', {method: 'POST', body: JSON.stringify({token: token_parsed?.token}), headers: player_headers})
           .then(res => res.json())
           .then((retrievedMessage) => {
             let current_players = [];
@@ -135,7 +135,7 @@ function PlayerSlots({ socket, setIngameToken }) {
     
         //sends login token, returns JSON object of authorization and ingame token
         function getIngameToken() {
-          fetch('http://localhost:3080/ingame_token', {method: 'POST', body: JSON.stringify({token: token_parsed?.token}), headers: player_headers})
+          fetch('http://54.91.205.171:3080/ingame_token', {method: 'POST', body: JSON.stringify({token: token_parsed?.token}), headers: player_headers})
           .then(res => res.json())
           .then((retrievedMessage) => {
             if (retrievedMessage.auth === 1) {

@@ -8,7 +8,7 @@ function Dealer({ socket }) {
 
     const callbackDealer = useCallback(() => {
         function getDealer() {
-          fetch('http://localhost:3080/dealer')
+          fetch('http://54.91.205.171:3080/dealer')
             .then(res => res.json())
             .then((retrievedMessage) => {
               setDealer(retrievedMessage.dealer)

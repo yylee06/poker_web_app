@@ -7,7 +7,7 @@ function JoinGame({ setGameToken, setIngameToken }) {
     const token_parsed = JSON.parse(token_unparsed)
     const game_headers = {'Accept': 'application/json', 'Content-Type': 'application/json'};
 
-    fetch('http://localhost:3080/join_game', {method: 'POST', body: JSON.stringify({token: token_parsed?.token}), headers: game_headers})
+    fetch('http://54.91.205.171:3080/join_game', {method: 'POST', body: JSON.stringify({token: token_parsed?.token}), headers: game_headers})
       .then(res => res.json())
       .then((retrievedMessage) => {
         if (retrievedMessage.auth === 1) {

@@ -6,7 +6,7 @@ function Pot({ socket }) {
 
     const callbackPot = useCallback(() => {
         function getPot() {
-          fetch('http://localhost:3080/pot')
+          fetch('http://54.91.205.171:3080/pot')
             .then(res => res.json())
             .then((retrievedMessage) => {
               setPot(retrievedMessage.pot)

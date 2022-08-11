@@ -14,7 +14,7 @@ function Withdraw() {
     const token_parsed = JSON.parse(token_unparsed)
     const withdraw_headers = {'Accept': 'application/json', 'Content-Type': 'application/json'};
 
-    fetch('http://localhost:3080/show_chips_bank', {method: 'POST', body: JSON.stringify({token: token_parsed?.token}), headers: withdraw_headers})
+    fetch('http://54.91.205.171:3080/show_chips_bank', {method: 'POST', body: JSON.stringify({token: token_parsed?.token}), headers: withdraw_headers})
     .then(res => res.json())
     .then((retrievedMessage) => {
       if (retrievedMessage.auth === 1) {
@@ -35,7 +35,7 @@ function Withdraw() {
     let withdraw_amount = parseInt(withdraw.amount)
     const withdraw_body = JSON.stringify({token: token_parsed?.token, amount: withdraw_amount});
 
-    fetch('http://localhost:3080/withdraw', {method: 'POST', body: withdraw_body, headers: withdraw_headers})
+    fetch('http://54.91.205.171:3080/withdraw', {method: 'POST', body: withdraw_body, headers: withdraw_headers})
       .then(res => res.json())
       .then((retrievedMessage) => {
         if (retrievedMessage.auth === 1) {

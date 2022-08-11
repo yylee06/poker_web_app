@@ -14,7 +14,7 @@ function Deposit() {
     const token_parsed = JSON.parse(token_unparsed)
     const deposit_headers = {'Accept': 'application/json', 'Content-Type': 'application/json'};
 
-    fetch('http://localhost:3080/show_chips_useable', {method: 'POST', body: JSON.stringify({token: token_parsed?.token}), headers: deposit_headers})
+    fetch('http://54.91.205.171:3080/show_chips_useable', {method: 'POST', body: JSON.stringify({token: token_parsed?.token}), headers: deposit_headers})
     .then(res => res.json())
     .then((retrievedMessage) => {
       if (retrievedMessage.auth === 1) {
@@ -35,7 +35,7 @@ function Deposit() {
     let deposit_amount = parseInt(deposit.amount)
     const deposit_body = JSON.stringify({token: token_parsed?.token, amount: deposit_amount});
 
-    fetch('http://localhost:3080/deposit', {method: 'POST', body: deposit_body, headers: deposit_headers})
+    fetch('http://54.91.205.171:3080/deposit', {method: 'POST', body: deposit_body, headers: deposit_headers})
       .then(res => res.json())
       .then((retrievedMessage) => {
         if (retrievedMessage.auth === 1) {

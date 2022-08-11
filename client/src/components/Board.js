@@ -10,7 +10,7 @@ function Board({ socket }) {
 
     const callbackBoard = useCallback(() => {
         function getBoard() {
-          fetch('http://localhost:3080/board_state')
+          fetch('http://54.91.205.171:3080/board_state')
             .then(res => res.json())
             .then((retrievedMessage) => {
               setBoard(retrievedMessage)

@@ -13,7 +13,7 @@ function Login({ setLoginToken, setAdminToken }) {
     const user_body = JSON.stringify({username: user.username, password: user.password});
     const user_headers = {'Accept': 'application/json', 'Content-Type': 'application/json'};
 
-    fetch('http://localhost:3080/login', {method: 'POST', body: user_body, headers: user_headers})
+    fetch('http://54.91.205.171:3080/login', {method: 'POST', body: user_body, headers: user_headers})
         .then((res) => res.json())
         .then((retrievedMessage) => {
           if (retrievedMessage.auth === 1) {
