@@ -8,7 +8,7 @@ function ReadyPlayers({ socket, setGameToken, ingameToken }) {
 
     const callbackReadyPlayersState = useCallback(() => {
         function getReadyPlayersState() {
-          fetch('http://54.91.205.171:3080/ready_players')
+          fetch('https://54.91.205.171:3080/ready_players')
             .then(res => res.json())
             .then((retrievedMessage) => {
               setReadyPlayers(retrievedMessage.ready_players)
@@ -24,7 +24,7 @@ function ReadyPlayers({ socket, setGameToken, ingameToken }) {
             const token_parsed = JSON.parse(token_unparsed)
             const player_headers = {'Accept': 'application/json', 'Content-Type': 'application/json'};
         
-            fetch('http://54.91.205.171:3080/player_still_ingame', {method: 'POST', body: JSON.stringify({token: token_parsed?.token}), headers: player_headers})
+            fetch('https://54.91.205.171:3080/player_still_ingame', {method: 'POST', body: JSON.stringify({token: token_parsed?.token}), headers: player_headers})
                 .then(res => res.json())
                 .then((retrievedMessage) => {
                     if (retrievedMessage.auth === 0) {

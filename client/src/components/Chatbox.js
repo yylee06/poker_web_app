@@ -51,7 +51,7 @@ function Chatbox({ socket }) {
     const token_parsed = JSON.parse(token_unparsed)
     const user_headers = {'Accept': 'application/json', 'Content-Type': 'application/json'};
 
-    fetch('http://54.91.205.171:3080/chat', {method: 'POST', body: JSON.stringify({token: token_parsed?.token, content: message.content}), headers: user_headers})
+    fetch('https://54.91.205.171:3080/chat', {method: 'POST', body: JSON.stringify({token: token_parsed?.token, content: message.content}), headers: user_headers})
         .then((res) => res.json())
         .then((retrievedMessage) => console.log(retrievedMessage.message))
 

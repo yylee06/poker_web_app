@@ -21,7 +21,7 @@ function Actions({ socket }) {
         const player_headers = {'Accept': 'application/json', 'Content-Type': 'application/json'};
 
         function getCurrentChips() {
-            fetch('http://54.91.205.171:3080/current_chips', {method: 'POST', body: JSON.stringify({token: token_parsed?.token}), headers: player_headers})
+            fetch('https://54.91.205.171:3080/current_chips', {method: 'POST', body: JSON.stringify({token: token_parsed?.token}), headers: player_headers})
             .then(res => res.json())
             .then((retrievedMessage) => {
                 if (retrievedMessage.auth === 1) {
@@ -35,7 +35,7 @@ function Actions({ socket }) {
     }, [])
 
     useEffect(() => {
-        fetch('http://54.91.205.171:3080/highest_bet')
+        fetch('https://54.91.205.171:3080/highest_bet')
             .then(res => res.json())
             .then((retrievedMessage) => {
                 setHighestBet(retrievedMessage.highest_bet)
@@ -62,7 +62,7 @@ function Actions({ socket }) {
         let raise_amount = parseInt(raise.amount)
         const raise_body = JSON.stringify({token: token_parsed?.token, amount: raise_amount});
 
-        fetch('http://54.91.205.171:3080/raise', {method: 'POST', body: raise_body, headers: player_headers})
+        fetch('https://54.91.205.171:3080/raise', {method: 'POST', body: raise_body, headers: player_headers})
             .then(res => res.json())
             .then((retrievedMessage) => {
                 if (retrievedMessage.auth === 1) {
@@ -87,7 +87,7 @@ function Actions({ socket }) {
 
         switch(action) {
             case "check":
-                fetch('http://54.91.205.171:3080/check', {method: 'POST', body: JSON.stringify({token: token_parsed?.token}), headers: player_headers})
+                fetch('https://54.91.205.171:3080/check', {method: 'POST', body: JSON.stringify({token: token_parsed?.token}), headers: player_headers})
                     .then(res => res.json())
                     .then((retrievedMessage) => {
                         if (retrievedMessage.auth === 1) {
@@ -99,7 +99,7 @@ function Actions({ socket }) {
                     })
                 break;
             case "call":
-                fetch('http://54.91.205.171:3080/call', {method: 'POST', body: JSON.stringify({token: token_parsed?.token}), headers: player_headers})
+                fetch('https://54.91.205.171:3080/call', {method: 'POST', body: JSON.stringify({token: token_parsed?.token}), headers: player_headers})
                     .then(res => res.json())
                     .then((retrievedMessage) => {
                         if (retrievedMessage.auth === 1) {
@@ -112,7 +112,7 @@ function Actions({ socket }) {
                     })
                 break;
             case "fold":
-                fetch('http://54.91.205.171:3080/fold', {method: 'POST', body: JSON.stringify({token: token_parsed?.token}), headers: player_headers})
+                fetch('https://54.91.205.171:3080/fold', {method: 'POST', body: JSON.stringify({token: token_parsed?.token}), headers: player_headers})
                     .then(res => res.json())
                     .then((retrievedMessage) => {
                         if (retrievedMessage.auth === 1) {
