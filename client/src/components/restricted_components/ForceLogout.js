@@ -15,7 +15,7 @@ function ForceLogout() {
     let submitted_values = getValues();
     const submitted_body = JSON.stringify({token: token_parsed?.token, username: submitted_values.username});
 
-    fetch('http://localhost:3080/force_logout', {method: 'POST', body: submitted_body, headers: token_headers})
+    fetch('https://54.91.205.171:3080/force_logout', {method: 'POST', body: submitted_body, headers: token_headers})
       .then(res => res.json())
       .then((retrievedMessage) => {
         alert(retrievedMessage.message)

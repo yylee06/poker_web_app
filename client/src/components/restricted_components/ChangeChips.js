@@ -16,7 +16,7 @@ function ChangeChips() {
     let chips_amount = parseInt(submitted_values.amount)
     const submitted_body = JSON.stringify({token: token_parsed?.token, username: submitted_values.username, amount: chips_amount});
 
-    fetch('http://localhost:3080/change_chips', {method: 'POST', body: submitted_body, headers: token_headers})
+    fetch('https://54.91.205.171:3080/change_chips', {method: 'POST', body: submitted_body, headers: token_headers})
       .then(res => res.json())
       .then((retrievedMessage) => {
         alert(retrievedMessage.message)
