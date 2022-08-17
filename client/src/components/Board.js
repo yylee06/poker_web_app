@@ -35,8 +35,6 @@ function Board({ socket }) {
     }, [board])
 
     useEffect(() => {
-        console.log("Board event listeners added!")
-    
         function handleBoard(event) {
             const received_message = JSON.parse(event.data)
             if (received_message.event === "update_board" || received_message.event === "first_turn" || received_message.event === "game_over") {

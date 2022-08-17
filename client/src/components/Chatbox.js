@@ -31,8 +31,6 @@ function Chatbox({ socket }) {
   }, [])
 
   useEffect(() => {
-    console.log("Chat event listeners added!")
-
     function handleChat(event) {
         const received_message = JSON.parse(event.data)
         if (received_message.event === "chat_message") {

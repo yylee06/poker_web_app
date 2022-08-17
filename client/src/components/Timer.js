@@ -12,8 +12,6 @@ function Timer({ socket, playerIndex }) {
     const proxy_timer = useRef(0)
 
     useEffect(() => {
-        console.log("Timer turn event listeners added!")
-    
         function handleTurn(event) {
             const received_message = JSON.parse(event.data)
             if (received_message.event === "next_turn") { 
@@ -41,7 +39,6 @@ function Timer({ socket, playerIndex }) {
     }, [socket, playerIndex]);
 
     useEffect(() => {
-        console.log("Timer event re-rendered!")
         setTimer(player_turn.current ? ALLOTTED_TIME : 0)
         proxy_timer.current = (player_turn.current ? ALLOTTED_TIME : 0)
 

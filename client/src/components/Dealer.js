@@ -19,8 +19,6 @@ function Dealer({ socket }) {
     }, [])
 
     useEffect(() => {
-        console.log("Dealer event listeners added!")
-    
         function handleDealer(event) {
             const received_message = JSON.parse(event.data)
             if (received_message.event === "first_turn") {

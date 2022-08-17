@@ -164,8 +164,6 @@ function PlayerSlots({ socket, setIngameToken }) {
     }, [callbackPlayerState, callbackAchievements, callbackPlayerChipsState])
 
     useEffect(() => {
-        console.log("Player event listeners added!")
-    
         function handlePlayers(event) {
             const received_message = JSON.parse(event.data)
             switch(received_message.event) {

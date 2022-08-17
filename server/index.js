@@ -875,9 +875,8 @@ function setupNextRound() {
 
                 //checking all hands to see if user gets the stacked_deck achievement
                 checkIfGoodHand(displayed_hand_strengths)
-                calculateWinnings()
- 
-                setTimeout(setupFirstRound, 3500)
+                setTimeout(calculateWinnings, 1000)
+                setTimeout(setupFirstRound, 4000)
             }, 250)
     }
 }

@@ -15,7 +15,6 @@ function TableChips({ socket }) {
           fetch('https://54.91.205.171:3080/table_chips')
             .then(res => res.json())
             .then((retrievedMessage) => {
-                console.log(retrievedMessage.chips)
                 setTableChips(retrievedMessage.chips)
 
                 //find sum of tableChips, if larger than last sum, this means a player has called/raised
@@ -42,7 +41,6 @@ function TableChips({ socket }) {
     }, [])
 
     useEffect(() => {
-        console.log("Table chips initially rendered.")
         play_chips_audio.current.volume = 0.5
         check_audio.current.volume = 0.5
 
@@ -50,8 +48,6 @@ function TableChips({ socket }) {
     }, [callbackTableChipsState])
 
     useEffect(() => {
-        console.log("Table chips event listeners added!")
-    
         function handleTableChips(event) {
             const received_message = JSON.parse(event.data)
             if (received_message.event === "next_turn" || received_message.event === "showdown" || received_message.event === "game_over") {

@@ -9,8 +9,6 @@ import table from '../assets/images/poker_table.png';
 //images is a map of all cards, including the table and player assets
 
 function App({ socket, ingameToken, setIngameToken }) {
-  console.log("Rendering App!")
-
   if (!ingameToken) {
     return (
       <div className="App">

@@ -15,7 +15,6 @@ import tokenAuth from '../auth/tokenAuth';
 import RestrictedActions from './RestrictedActions';
 
 function Components() {
-  console.log("Rendering Component!")
   const { loginToken, setLoginToken } = useLoginToken();
   const { gameToken, setGameToken } = useGameToken();
   const { ingameToken, setIngameToken } = useIngameToken();

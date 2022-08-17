@@ -129,8 +129,6 @@ function Actions({ socket }) {
     }
 
     useEffect(() => {
-        console.log("Actions event listeners added!")
-    
         function handleChips(event) {
             const received_message = JSON.parse(event.data)
             if (received_message.event === "next_turn") {
