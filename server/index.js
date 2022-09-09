@@ -481,27 +481,31 @@ function calculateWinnings() {
         house_chips = Math.floor(house_chips/winner.length)
         for (let curr_winner of winner) {
             distributeWinnings(curr_winner, house_chips)
+            userRepo.incrementWins(curr_winner)
+                .then(() => userRepo.getByUsername(curr_winner))
+                .then((retrievedUser) => {
+                    if (retrievedUser.wins === 3) {
+                        updateAchievement('talented', curr_winner, 1)
+                    }
+                })
         }
     }
     //if there is a single winner
     else {
-        distributeWinnings(winner, house_chips)      
+        distributeWinnings(winner, house_chips)
+        userRepo.incrementWins(winner)
+            .then(() => userRepo.getByUsername(winner))
+            .then((retrievedUser) => {
+                if (retrievedUser.wins === 3) {
+                    updateAchievement('talented', winner, 1)
+                }
+            })      
     }
 
     //sends winner(s) to client for glow visual effect
     wss.clients.forEach(function each(client) {
         client.send(JSON.stringify({event: "winner", winner: winner}))
     })
-    
-    //increments number of wins for user
-    userRepo.incrementWins(winner)
-        .then(() => userRepo.getByUsername(winner))
-        .then((retrievedUser) => {
-            //checks if user needs achievement for 3+ wins
-            if (retrievedUser.wins === 3) {
-                updateAchievement('talented', winner, 1)
-            }
-        })
 
     //reverse side_pots to pop pots with largest number of participants first
     side_pots.reverse()
