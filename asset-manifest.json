@@ -1,7 +1,7 @@
 {
   "files": {
     "main.css": "/static/css/main.9a72ddc8.css",
-    "main.js": "/static/js/main.4c6da4a4.js",
+    "main.js": "/static/js/main.876f6ffc.js",
     "static/js/787.c4e7f8f9.chunk.js": "/static/js/787.c4e7f8f9.chunk.js",
     "static/media/dark_card_back.png": "/static/media/dark_card_back.d0e8cf537630a82efd35.png",
     "static/media/card_back.png": "/static/media/card_back.5f5b183e1f8be3d792e1.png",
@@ -67,11 +67,11 @@
     "static/media/deal_card.mp3": "/static/media/deal_card.63f43207e00c653fec26.mp3",
     "index.html": "/index.html",
     "main.9a72ddc8.css.map": "/static/css/main.9a72ddc8.css.map",
-    "main.4c6da4a4.js.map": "/static/js/main.4c6da4a4.js.map",
+    "main.876f6ffc.js.map": "/static/js/main.876f6ffc.js.map",
     "787.c4e7f8f9.chunk.js.map": "/static/js/787.c4e7f8f9.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.9a72ddc8.css",
-    "static/js/main.4c6da4a4.js"
+    "static/js/main.876f6ffc.js"
   ]
 }
