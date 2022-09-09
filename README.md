@@ -66,10 +66,10 @@ second ping window without responding, the user will automatically be logged out
 #### Achievements({ serial, inUse })
 
 **(Arguments)**
-
-_serial_ - number (0-2) assigned to the mounted component denoting what achievement the component is correlated to
-
-_inUse_ - boolean value (0/1) denoting whether or not the achievement should be rendered (0 for no, 1 for render)
+<ul>
+    <li>_serial_ - number (0-2) assigned to the mounted component denoting what achievement the component is correlated to</li>
+    <li>_inUse_ - boolean value (0/1) denoting whether or not the achievement should be rendered (0 for no, 1 for render)</li>
+</ul>
 
 The achievements component is used within the PlayerSlot parent component to display all achievements awarded to a given player. Each (Arguments) component is rendered on each PlayerSlot parent, but is set to null if the player has the given achievement. 
 
