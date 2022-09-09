@@ -157,7 +157,7 @@ The client is authenticated by the server by the client's hashed login-token to 
 #### Login({ setLoginToken, setAdminToken })
 <ul>
     <li>setLoginToken - token method used to change loginToken state - loginToken token is used to determine if a user is logged in or not</li>
-    <li>setAdminToken - token method used to change adminToken state - adminToken token is a token given to users with admin privileges (must be set manually by calling the respective function server-side or editing the database directly) and displays admin-only commands found in [Restricted Actions](#restricted-components-ie-admin-commands)</li>
+    <li>setAdminToken - token method used to change adminToken state - adminToken token is a token given to users with admin privileges (must be set manually by calling the respective function server-side or editing the database directly) and displays admin-only commands (i.e. restricted actions)</li>
 </ul>
 
 This component is responsible for accepting login information from users allowing users to log in after authenticating with the server. Furthermore, if a user is already logged in on another session, the latter client will not be able to log in until the former client has closed the browser or logged off. 
