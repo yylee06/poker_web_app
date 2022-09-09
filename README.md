@@ -23,9 +23,13 @@ to accept POST API calls from your local network. Also, if testing on a local ne
 
 # Table of Contents
 [Installing](#installing)
+
 [React JS Client](#react-js-client)
+
 [Node JS Server](#node-js-server)
+
 [Deck of Cards Algorithms](#deck-of-cards-and-player-sorting)
+
 [SQLite3 Databases and Data Access Object](#sqlite3-databases-and-data-access-object-dao)
 
 # Installing
@@ -61,11 +65,13 @@ second ping window without responding, the user will automatically be logged out
 
 #### Achievements({ serial, inUse })
 
-**Arguments**
-__serial__ - number (0-2) assigned to the mounted component denoting what achievement the component is correlated to
-__inUse__ - boolean value (0/1) denoting whether or not the achievement should be rendered (0 for no, 1 for render)
+**(Arguments)**
 
-The achievements component is used within the PlayerSlot parent component to display all achievements awarded to a given player. Each Arguments component is rendered on each PlayerSlot parent, but is set to null if the player has the given achievement. 
+_serial_ - number (0-2) assigned to the mounted component denoting what achievement the component is correlated to
+
+_inUse_ - boolean value (0/1) denoting whether or not the achievement should be rendered (0 for no, 1 for render)
+
+The achievements component is used within the PlayerSlot parent component to display all achievements awarded to a given player. Each (Arguments) component is rendered on each PlayerSlot parent, but is set to null if the player has the given achievement. 
 
 As of the creation of this document, there are only 3 achievements, as a result the displayed achievements do not need to dynamically spread apart or resize, but this can be accomplished if necessary in the PlayerSlot css file. 
 
@@ -75,8 +81,9 @@ Currently there exist achievements for users that hold over 10000 chips in the b
 
 #### Actions({ socket })
 
-**Arguments**
-__socket__ - websocket connection set in parent component
+**(Arguments)**
+
+_socket_ - websocket connection set in parent component
 
 The actions component is in charge of handling all the https server API calls related to in-game actions (i.e. calling, folding, raising, checking), and updates component states accordingly to show relevant dynamic values (ex. how many chips would be required to call a bet). 
 
@@ -86,17 +93,21 @@ Unless it is currently the user's turn (shown by the timer component and an acco
 
 #### App({ socket, ingameToken, setIngameToken })
 
-**Arguments**
-__socket__ - websocket connection set in parent component
-__ingameToken__ - token state that determines whether or not user is in currently ongoing game, used in this component to conditionally render certain component sets
-__setIngameToken__ - token method used to change ingameToken state, used in this component to be sent to a child component such that the child component can conditionally change the ingameToken state asynchronously and propagate the state change through its parent components
+**(Arguments)**
+
+_socket_ - websocket connection set in parent component
+
+_ingameToken_ - token state that determines whether or not user is in currently ongoing game, used in this component to conditionally render certain component sets
+
+_setIngameToken_ - token method used to change ingameToken state, used in this component to be sent to a child component such that the child component can conditionally change the ingameToken state asynchronously and propagate the state change through its parent components
 
 This component is used to contain all sub-components for gameplay and player elements. This includes the poker table, dealer chip, total chip pot, communal board cards, player slots and identifying elements, chips on the table and the possible actions UI. The socket prop given to this component is sent down to any relevant sub-components that require websocket listening capabilities. 
 
 #### Board({ socket })
 
-**Arguments**
-__socket__ - websocket connection set in parent component
+**(Arguments)**
+
+_socket_ - websocket connection set in parent component
 
 This component is used to display the communal board for the game, displaying either 0, 3, 4, or 5 cards depending on the game state. The board is updated once on initial mount, and is called again every time the relevant websocket event is broadcasted to the client by requesting the board state from the server. 
 
@@ -104,8 +115,9 @@ The board component also holds access to certain audio assets that are played wh
 
 #### Chatbox({ socket })
 
-**Arguments**
-__socket__ - websocket connection set in parent component
+**(Arguments)**
+
+_socket_ - websocket connection set in parent component
 
 This component is in charge of displaying the chat box and any messages sent by the client or other clients. The message form sends the form data to the server, and in turn the server employs websockets to broadcast the message to all clients that are logged in, and the chat box is updated accordingly. 
 
@@ -127,8 +139,9 @@ game events.
 
 #### Dealer({ socket })
 
-**Arguments**
-__socket__ - websocket connection set in parent component
+**(Arguments)**
+
+_socket_ - websocket connection set in parent component
 
 This component handles the location and rendering of the dealer chip. This information is requested from the server by the client when the relevant websocket event is received. As a result, this component is purely visual. 
 
@@ -140,9 +153,11 @@ Note the difference between chips on hand and banked chips - chips on hand can b
 
 #### JoinGame({ setGameToken, setIngameToken })
 
-**Arguments**
-__setGameToken__ - token method used to change gameToken state - gameToken token is used to show whether or not a user is in a game or not
-__setIngameToken__ - token method used to change ingameToken state - ingameToken token is used to show whether or not a user is in an ongoing game or not
+**(Arguments)**
+
+_setGameToken_ - token method used to change gameToken state - gameToken token is used to show whether or not a user is in a game or not
+
+_setIngameToken_ - token method used to change ingameToken state - ingameToken token is used to show whether or not a user is in an ongoing game or not
 
 **Note:** The difference between gameToken and ingameToken - gameToken denotes if a player is in the game before the game begins, but ingameToken denotes if a player is in an ongoing game
 
@@ -152,9 +167,11 @@ The client is authenticated by the server by the client's hashed login-token to 
 
 #### Login({ setLoginToken, setAdminToken })
 
-**Arguments**
-__setLoginToken__ - token method used to change loginToken state - loginToken token is used to determine if a user is logged in or not
-__setAdminToken__ - token method used to change adminToken state - adminToken token is a token given to users with admin privileges (must be set manually by calling the respective function server-side or editing the database directly) and displays admin-only commands found in [Restricted Actions](#restricted-components-ie-admin-commands).
+**(Arguments)**
+
+_setLoginToken_ - token method used to change loginToken state - loginToken token is used to determine if a user is logged in or not
+
+_setAdminToken_ - token method used to change adminToken state - adminToken token is a token given to users with admin privileges (must be set manually by calling the respective function server-side or editing the database directly) and displays admin-only commands found in [Restricted Actions](#restricted-components-ie-admin-commands).
 
 This component is responsible for accepting login information from users allowing users to log in after authenticating with the server. Furthermore, if a user is already logged in on another session, the latter client will not be able to log in until the former client has closed the browser or logged off. 
 
@@ -162,19 +179,25 @@ The server continually pings the client every 30 seconds through websockets, and
 
 #### PlayerChip({ chips })
 
-**Arguments**
-__chips__ - integer value that denotes the number of chips to display on a player slot element
+**(Arguments)**
+
+_chips_ - integer value that denotes the number of chips to display on a player slot element
 
 This component displays the number of chips on hand for a given player on their respective player slot element. This component is a sub-component of the PlayerSlot component. 
 
 #### PlayerSlot({ socket, currPlayer, winner, handStrength, achievements })
 
-**Arguments**
-__socket__ - websocket connection set in parent component
-__currPlayer__ - object prop that includes many properties of a given player (i.e. username, held cards, chips on hand and whether or not the given player slot element is in use) to be sent to various child sub-components
-__winner__ - a boolean value that denotes whether or not a given player is the winner of a particular game - used to display a glowing effect around the winner to all players in the game
-__handStrength__ - a string value sent at the end of a game at showdown to show the strength of each player's hand (granted they have not yet folded), set to an empty string by default until the end of a game
-__achievements__ - an array of boolean integer values that denote whether or not the given user has earned a specific achievement
+**(Arguments)**
+
+_socket_ - websocket connection set in parent component
+
+_currPlayer_ - object prop that includes many properties of a given player (i.e. username, held cards, chips on hand and whether or not the given player slot element is in use) to be sent to various child sub-components
+
+_winner_ - a boolean value that denotes whether or not a given player is the winner of a particular game - used to display a glowing effect around the winner to all players in the game
+
+_handStrength_ - a string value sent at the end of a game at showdown to show the strength of each player's hand (granted they have not yet folded), set to an empty string by default until the end of a game
+
+_achievements_ - an array of boolean integer values that denote whether or not the given user has earned a specific achievement
 
 This component is responsible for displaying each player's statistics and in-game properties to all other players. All information that should stay hidden to other players (i.e. what cards each player has and the strength of their hand) are only given by the server to the parent component and propagated to this component when no actions can be taken by players (i.e. the end of a game).
 
@@ -182,15 +205,17 @@ The cards shown that "belong" to other players are shown as a card back, and can
 
 The PlayerSlot component also contains the timer for each player when it is a given player's turn. Because it is necessary for the timer to quickly update to the game-state to serve as an accurate timer, the Timer sub-component is passed the websocket from its parent component.
 
-The inUse property of the __currPlayer__ object argument doubles as a playerIndex (i.e. 0 for not in use or 1-9 for which slot is in use) for use in the Timer component such that the timer can update and correctly determine when a certain player slot's timer should be running. Also, when the inUse property is set at 0, the component does not render, as there is no player using the given slot.
+The inUse property of the _currPlayer_ object argument doubles as a playerIndex (i.e. 0 for not in use or 1-9 for which slot is in use) for use in the Timer component such that the timer can update and correctly determine when a certain player slot's timer should be running. Also, when the inUse property is set at 0, the component does not render, as there is no player using the given slot.
 
-Possible optimizations to more efficient and less redundant rendering include further compartmentalizing the __winner__ and __handStrength__ properties into their own components, but currently has negligible changes on client load. 
+Possible optimizations to more efficient and less redundant rendering include further compartmentalizing the _winner_ and _handStrength_ properties into their own components, but currently has negligible changes on client load. 
 
 #### PlayerSlots({ socket, setIngameToken })
 
-**Arguments**
-__socket__ - websocket connection set in parent component
-__setIngameToken__ - token method used to change ingameToken state - ingameToken token is used to show whether or not a user is in an ongoing game or not
+**(Arguments)**
+
+_socket_ - websocket connection set in parent component
+
+_setIngameToken_ - token method used to change ingameToken state - ingameToken token is used to show whether or not a user is in an ongoing game or not
 
 This component is responsible for displaying all the player slots of players currently in the game (i.e. hold the gameToken). Similarly, this component requests several state variables from the server, including the winners of a given round, the hand strengths of each player, each player's username, each player's cards, each player's chips on hand, and each player's achievements. Each of these variables are kept as states, and are updated when the respective websocket event is received from the server.
 
@@ -200,17 +225,21 @@ This component is in charge of rendering all PlayerSlot child sub-components and
 
 #### Pot({ socket })
 
-**Arguments** 
-__socket__ - websocket connection set in parent component
+**(Arguments)** 
+
+_socket_ - websocket connection set in parent component
 
 This component is responsible for the in-game chip pot. This displays the total number of chips in the pot (including the main pot and any side pots). The pot value is updated through a server request every turn and at the end of a game, which is timed through received websocket events. 
 
 #### ReadyPlayers({ socket, setGameToken, ingameToken })
 
-**Arguments** 
-__socket__ - websocket connection set in parent component
-__setGameToken__ - token method used to change gameToken state - gameToken token is used to show whether or not a user is in a game or not
-__ingameToken__ - a token used to determine whether or not the given user is in an ongoing game or not (as opposed to being in a game that has not yet started)
+**(Arguments)** 
+
+_socket_ - websocket connection set in parent component
+
+_setGameToken_ - token method used to change gameToken state - gameToken token is used to show whether or not a user is in a game or not
+
+_ingameToken_ - a token used to determine whether or not the given user is in an ongoing game or not (as opposed to being in a game that has not yet started)
 
 This component renders a button to stop or start the game, depending on whether or not the game is currently in progress or not respectively. Furthermore this component also renders a fraction element that denotes how many currently playing users wish to stop/start the game. This is updated through a websocket event that is broadcasted when a user has toggled the stop or start button sub-components. 
 
@@ -242,15 +271,17 @@ Currently server-side, out of all players currently in the game, the decision mu
 
 #### TableChip({ chips })
 
-**Arguments**
-__chips__ - integer value that denotes the number of chips to display on the table for a given player (i.e. chips bet in a given round by a player)
+**(Arguments)**
+
+_chips_ - integer value that denotes the number of chips to display on the table for a given player (i.e. chips bet in a given round by a player)
 
 This component renders the number of chips bet by a player in a given round. In the case that no chips are bet, the container will be hidden, and nothing will be rendered until the player makes a bet. 
 
 #### TableChips({ socket })
 
-**Arguments** 
-__socket__ - websocket connection set in parent component
+**(Arguments)** 
+
+_socket_ - websocket connection set in parent component
 
 This component is responsible for rendering all TableChip sub-components for each player in the game when a valid action is taken by a player ingame that involves betting any number of chips. The number of chips on the table held by each player is requested from the server when certain events are broadcasted through the websocket client, and is propagated to all individual TableChip child sub-components. 
 
@@ -258,9 +289,11 @@ Each time this component sends a server request for a tableChips state update, a
 
 #### Timer({ socket, playerIndex })
 
-**Arguments** 
-__socket__ - websocket connection set in parent component
-__playerIndex__ - (1-9) integer index of which PlayerSlot parent component the given Timer component is rendered within
+**(Arguments)** 
+
+_socket_ - websocket connection set in parent component
+
+_playerIndex_ - (1-9) integer index of which PlayerSlot parent component the given Timer component is rendered within
 
 This component handles the dynamic timer representing the length of a user's turn ingame. As this component is embedded within each PlayerSlot parent component, the Timer component is made to render the given player's timer that is received from the respective websocket event. To achieve the correct response when a new event is received, a stateful value turn is updated when it is a new user's in-game turn. 
 
@@ -319,16 +352,19 @@ To interact with the relevant constructed databases, either through loading or e
 
 #### addToAchievementArray(username)
 
-**Arguments**
-__username__ - username of client to be added
+**(Arguments)**
+
+_username_ - username of client to be added
 
 The addToAchievementArray method is used when a user joins the game, and adds the user's username and achievement data held in the achievement hash map into a working array of users and their respective achievements. This working array is sent to the client such that all clients can render each user's achievements accurately.
 
 #### buildActionsArray(last_action, is_raise)
 
-**Arguments**
-__last_action__ - the player index corresponding to the action performed by the most recent player (i.e. 0-9, -1 if start of new round)
-__is_raise__ - a boolean integer value that denotes whether or not the last action was a raise (1 if raise, 0 if not)
+**(Arguments)**
+
+_last_action_ - the player index corresponding to the action performed by the most recent player (i.e. 0-9, -1 if start of new round)
+
+_is_raise_ - a boolean integer value that denotes whether or not the last action was a raise (1 if raise, 0 if not)
 
 The buildActionsArray method is used for building an array of player turns by their player index for a given round (i.e. pre-flop, flop, river, etc.), and is used by the sendNextTurn method to determine the next player's turn and broadcast the message via websocket. The sendNextTurn method removes one turn from the array stack at a time, and when the action array is empty, this begins the next round of play, or finishes the game if it is the last round. 
 
@@ -354,15 +390,17 @@ This method is also responsible for tallying wins in the user database so that u
 
 #### checkIfGoodHand(hand_strengths)
 
-**Arguments**
-__hand_strengths__ - an array of the category of each player's hand and board combination, sorted by player index
+**(Arguments)**
+
+_hand_strengths_ - an array of the category of each player's hand and board combination, sorted by player index
 
 This method is purely used at showdown to determine whether or not the users playing have the required hand strength threshold to be rewarded the "Stacked Deck" achievement. Currently this achievement is awarded to users that reach showdown with a flush or better, but can be easily changed if wanted. 
 
 #### defaultAction(username)
 
-**Arguments**
-__username__ - username of the player that must act in the given in-game turn
+**(Arguments)**
+
+_username_ - username of the player that must act in the given in-game turn
 
 The defaultAction method is called if a user's in-game timer reaches 0, and is used to progress the game in the case that a user cannot respond in time. Essentially, if this method is called for a user, they will check if the option is open to them (i.e. their current bet is equal to the highest bet on the table), else they will fold. 
 
@@ -372,8 +410,9 @@ The endGameCleanup method is called if all users have decided to stop the game (
 
 #### foldFormattedCards(player_index)
 
-**Arguments**
-__player_index__ - the player index (0-9) of the given in-game user, corresponding to their position on the game table
+**(Arguments)**
+
+_player_index_ - the player index (0-9) of the given in-game user, corresponding to their position on the game table
 
 The foldFormattedCards method is called whenever a user folds, and is used to alter the formatted_cards in-game variable to show that the given user is no longer participating in the given game. This is done to show an accurate representation of the game client-side, but has no bearing on the actual game server-side. 
 
@@ -387,8 +426,9 @@ The indexCards method is called at the beginning of every game, and creates a so
 
 #### playerReturns(player_index)
 
-**Arguments**
-__player_index__ - the player index (0-9) of the given in-game user, corresponding to their position on the game table
+**(Arguments)**
+
+_player_index_ - the player index (0-9) of the given in-game user, corresponding to their position on the game table
 
 The playerReturns method is only called when a user is in-game, but has left the game (closing the browser or logging out) and rejoins the game before the timer runs out or the defaultAction method causes them to fold. The purpose of this method is to remove the given player from the leaving_users array, which is used at the end of each game to remove invalid players (i.e. players with too few chips or players that have left the game)
 
@@ -402,8 +442,9 @@ The purgeDisplayedHandStrength method is called each game before showdown (if it
 
 #### removeFromAchievementsArray(username)
 
-**Arguments**
-__username__ - username of given player
+**(Arguments)**
+
+_username_ - username of given player
 
 The removeFromAchievementsArray is called when a user leaves the game, and removes said user from the sorted achievement arrays, which are sent to the client so that users can see the achievements held by all in-game users. These achievement arrays are different from the preloaded achievements hash map, and are curated to only show the achievements of players currently in-game. 
 
@@ -441,8 +482,9 @@ The setBlinds method is called at the beginning of every game, and is responsibl
 
 #### setHighestBet(default_value)
 
-**Arguments**
-__default_value__ - number of chips that denote the highest bet currently
+**(Arguments)**
+
+_default_value_ - number of chips that denote the highest bet currently
 
 The setHighestBet method is called at the start of every new round with a default value (20 at the beginning of the game, 0 otherwise) to denote the highest number of chips currently bet on the table by a single player. This value is updated every time a player raises, and will be increased to match the new highest bet. The highest_bet in-game variable is used in server-side calculations, and is also sent client-side regularly to dynamically render certain elements, most notably the dynamic "call x" action element.
 
@@ -456,8 +498,9 @@ The setupNextRound method is called at the end of every betting round, and perfo
 
 #### showFormattedCards(isShowdown)
 
-**Arguments**
-__isShowdown__ - a boolean value denoting whether or not the game-state is at showdown, meaning all 5 cards are on the board and the betting has ended without all but 1 player folding
+**(Arguments)**
+
+_isShowdown_ - a boolean value denoting whether or not the game-state is at showdown, meaning all 5 cards are on the board and the betting has ended without all but 1 player folding
 
 The showFormattedCards method is used to build an array of card values based on the shown_cards game variable such that the resulting array can be sent to the client to be rendered accordingly. If this method is called with isShowdown being false, clients will only be able to see their own cards and the cards on the board, and the cards of other clients will have placeholders so as to not give any unfair in-game knowledge. 
 
@@ -471,10 +514,13 @@ In the case that side pots need to be created (if a user pushes all-in), the cal
 
 #### updateAchievement(achievement, username, is_added)
 
-**Arguments**
-__achievement__ - the achievement in question, in string format
-__username__ - username of player to be rewarded an achievement or have an achievement taken from them
-__is_added__ - a boolean integer value denoting whether the user is given an achievement or an achievement is taken from them (1 for rewarded achievement, 0 for achievement removed)
+**(Arguments)**
+
+_achievement_ - the achievement in question, in string format
+
+_username_ - username of player to be rewarded an achievement or have an achievement taken from them
+
+_is_added_ - a boolean integer value denoting whether the user is given an achievement or an achievement is taken from them (1 for rewarded achievement, 0 for achievement removed)
 
 This method is called whenever a user reaches the threshold to be rewarded an achievement or have an achievement taken from them. For example, this method is called to award the "Wealthy" achievement when the user has reached more than 10000 chips in their bank, but is also called to remove said achievement from the user once less than 10000 chips exist in their bank.
 
@@ -484,10 +530,13 @@ This method first edits the achievement database, and then the loaded achievemen
 
 #### addNewUser(username, password, is_admin)
 
-**Arguments**
-__username__ - requested username for the new user
-__password__ - requested password for the new user
-__is_admin__ - a boolean integer value denoting whether or not the user to be created is an admin or not (1 for admin, 0 for normal)
+**(Arguments)**
+
+_username_ - requested username for the new user
+
+_password_ - requested password for the new user
+
+_is_admin_ - a boolean integer value denoting whether or not the user to be created is an admin or not (1 for admin, 0 for normal)
 
 The addNewUser method is used to add a new registered user to the user database. Several values are hashed using the SHA-256 hashing algorithm to create the login, game and ingame tokens for the new user. To create the login token the username is hashed, to create the game token the login token is hashed and to create the ingame token the game token is hashed. As a result, all token authentication is cryptographically sound, meaning any attacker cannot feasibly access a user account that is not theirs from the client, or spoof tokens to access content that they should not be able to access. 
 
@@ -497,8 +546,9 @@ The checkAchievementsTableExists method checks whether or not the achievements t
 
 #### checkIfUserExists(username)
 
-**Arguments**
-__username__ - username of user in question
+**(Arguments)**
+
+_username_ - username of user in question
 
 The checkIfUserExists method is to quickly check if the given username is in the users SQL database. As it is also possible to query the given username and use error catching to check whether a user exists whilst also performing actions on the given users SQL database entry, this method is not used in any server APIs, and only exists for manual testing if necessary. 
 
@@ -702,9 +752,11 @@ The buildDeck method is responsible for creating the unmodified array of 52 card
 
 #### dealBoard(shuffledDeck, board)
 
-**Arguments**
-__shuffledDeck__ - permuted (randomized) deck of cards returned by the shuffleDeck method
-__board__ - initialized board array (begins as empty array)
+**(Arguments)**
+
+_shuffledDeck_ - permuted (randomized) deck of cards returned by the shuffleDeck method
+
+_board_ - initialized board array (begins as empty array)
 
 The dealBoard method is responsible for dealing 5 cards from the shuffled deck onto the board array, thereby populating the board array with 5 pseudo-random cards. This method is called once per game, and primes the board array for calculations used to rank all player hand-board combinations and sort them in order of combination tier. 
 
@@ -712,16 +764,19 @@ It is important to note that this means that the cards placed on the board are p
 
 #### displayHandStrength(players)
 
-**Arguments**
-__players__ - array of player objects - each player object contains an individual player's username, hand, hand strength and hand rank 
+**(Arguments)**
+
+_players_ - array of player objects - each player object contains an individual player's username, hand, hand strength and hand rank 
 
 The displayHandStrength method is used to return a sorted array of each player's hand strength (i.e. tier of hand-board combination) as displayable strings. The results of this array are curated by the server to cull the hand strength data of any users that have previously folded in the given game, and are then sent to the client at the end of a game to allow users to more easily understand the results of the game, if the showdown game state has been reached. 
 
 #### handChecker(hand, board)
 
-**Arguments**
-__hand__ - the two cards held in the hand array of a given user
-__board__ - the five cards placed on the board array
+**(Arguments)**
+
+_hand_ - the two cards held in the hand array of a given user
+
+_board_ - the five cards placed on the board array
 
 The handChecker method is responsible for calculating the best possible hand-board combination held by a given user, and returning said data as easily sortable object parameters (tier of combination and the best 5 cards used to make said combination, set as hand_strength and high_rank respectively), which are then added to the respective player objects.
 
@@ -729,46 +784,55 @@ This method generates hash maps to sort the hand and board card data either base
 
 #### initializePlayers(usernames, players)
 
-**Arguments**
-__usernames__ - sorted array of usernames denoting each in-game player (sorted by player seat order)
-__players__ - an empty array used to hold player objects
+**(Arguments)**
+
+_usernames_ - sorted array of usernames denoting each in-game player (sorted by player seat order)
+
+_players_ - an empty array used to hold player objects
 
 The initializePlayers method is responsible for initializing player objects for each username in the usernames array passed to the method. The players array is populated in a sorted order corresponding to the order of usernames in the passed array. Other methods will populate the currently empty parameters of each player object (i.e. the hand, hand_strength, and high_rank parameters).
 
 #### multiHandChecker(board, players)
 
-**Arguments**
-__board__ - the five cards placed on the board array
-__players__ - array of player objects (hand and username parameters are populated, but hand_strength and high_rank at this point are empty strings)
+**(Arguments)**
+
+_board_ - the five cards placed on the board array
+
+_players_ - array of player objects (hand and username parameters are populated, but hand_strength and high_rank at this point are empty strings)
 
 The multiHandChecker is responsible for calling the handChecker method on all players in the given game, and thereby populating each player object's hand_strength and high rank parameters, corresponding to the tier of hand-board combination possessed and the best 5 cards used to make said combination.
 
 #### multiHandSorter(players)
 
-**Arguments**
-__players__ - array of player objects, containing all populated parameters from previously called methods 
+**(Arguments)**
+
+_players_ - array of player objects, containing all populated parameters from previously called methods 
 
 The multiHandSorter method is responsible for building a sorted array of usernames based on the hand_strength and high_rank data of each player object. The array is first sorted on the tier of card combination (hand_strength) and then on an individual card basis if there exists a tie (high_rank). The resulting sorted array is returned to the server where it can be used to determine winners and distribute chips, and edited in the case any users fold mid-game. 
 
 #### playCard(shuffledDeck)
 
-**Arguments**
-__shuffledDeck__ - permuted (randomized) deck of cards returned by the shuffleDeck method
+**(Arguments)**
+
+_shuffledDeck_ - permuted (randomized) deck of cards returned by the shuffleDeck method
 
 The playCard method is responsible for popping the last element of the permuted deck and returning the resulting card. This method results in a pseudo-random card from the deck, and is used to deal cards to player hands and to the board. 
 
 #### shuffleDeck(deck)
 
-**Arguments**
-__deck__ - unmodified deck of cards (sorted by nature)
+**(Arguments)**
+
+_deck_ - unmodified deck of cards (sorted by nature)
 
 The shuffleDeck method is responsible for first creating a 1-level deep copy of the unmodified deck of cards, and shuffling the new deck of cards in a pseudo-random manner. The deck is shuffled by looping through each index of the deck and using an indexed multiple of the random method from the Math library to swap two cards within the deck every loop, thereby creating a pseudo-random permutation of the deck of cards.
 
 #### userFolds(folded_user, sorted_names)
 
-**Arguments**
-__folded_user__ - user that has folded in the game
-__sorted_names__ - sorted array of names in order of ability to win solely based on hand-board combination strength 
+**(Arguments)**
+
+_folded_user_ - user that has folded in the game
+
+_sorted_names_ - sorted array of names in order of ability to win solely based on hand-board combination strength 
 
 The userFolds method is responsible for removing the user that has folded from the list of sorted usernames. This method also accounts for the case that the user in question is involved in a tie (meaning their entry in the sorted usernames array will be an array of usernames rather than a single username).
 
