@@ -22,7 +22,7 @@ function Components() {
 
   //websocket API
   const socket = useMemo(() => {
-    return new WebSocket('wss://54.91.205.171:3080');
+    return new WebSocket('wss://yunyeollee-server.com:3080');
   }, [])
 
   useEffect(() => {
@@ -64,7 +64,7 @@ function Components() {
     sessionStorage.removeItem("game-token")
     sessionStorage.removeItem("ingame-token")
 
-    fetch('https://54.91.205.171:3080/exit_game', {method: 'POST', body: JSON.stringify({token: token_parsed?.token}), headers: game_headers})
+    fetch('https://yunyeollee-server.com:3080/exit_game', {method: 'POST', body: JSON.stringify({token: token_parsed?.token}), headers: game_headers})
       .then(res => res.json())
       .then((retrievedMessage) => {
         if (retrievedMessage.auth === 1) {
@@ -89,7 +89,7 @@ function Components() {
 
     sessionStorage.clear()
 
-    fetch('https://54.91.205.171:3080/logout', {method: 'POST', body: JSON.stringify({token: token_parsed?.token}), headers: game_headers})
+    fetch('https://yunyeollee-server.com:3080/logout', {method: 'POST', body: JSON.stringify({token: token_parsed?.token}), headers: game_headers})
       .then(res => res.json())
       .then((retrievedMessage) => {
         if (retrievedMessage.auth === 1) {

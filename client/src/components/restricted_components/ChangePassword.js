@@ -15,7 +15,7 @@ function ChangePassword() {
     let submitted_values = getValues();
     const submitted_body = JSON.stringify({token: token_parsed?.token, username: submitted_values.username, password: submitted_values.password});
 
-    fetch('https://54.91.205.171:3080/change_password', {method: 'POST', body: submitted_body, headers: token_headers})
+    fetch('https://yunyeollee-server.com:3080/change_password', {method: 'POST', body: submitted_body, headers: token_headers})
       .then(res => res.json())
       .then((retrievedMessage) => {
         alert(retrievedMessage.message)

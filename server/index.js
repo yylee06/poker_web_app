@@ -8,14 +8,18 @@ const AchievementRepository = require('./achievement_repository');
 const { resolve } = require('path');
 const bodyParser = require('body-parser');
 const Deck = require('./deck');
+var http = require('http')
+var https = require('https')
+var fs = require('fs')
+
 //allotted_time for timer, can be changed at will; set to +1 of the client-side timer for latency
 const ALLOTTED_TIME = 26
 const SMALL_BLIND = 10
 const BIG_BLIND = 20
 
-//sets up cors to accept requests from http://localhost:3000 only
+//sets up cors to accept requests from http://yunyeollee.com only
 var corsOptions = {
-    origin: 'https://yylee06.github.io',
+    origin: 'https://yunyeollee.com',
     optionsSuccessStatus: 200
 }
 
@@ -40,11 +44,19 @@ class Clients {
     }
 }
 
-const server = require('http').createServer(app);
+//certificate used for HTTPS communication (can be self-signed for testing)
+var options = {
+    key: 'INSERT PRIVATE KEY HERE',
+    cert: 'INSERT SSL CERTIFICATE HERE',
+    ca: 'INSERT CERTIFICATE CHAIN HERE'
+}
+
+const server_http = http.createServer(app);
+const server_https = https.createServer(options, app);
 const WebSocket = require('ws')
 const WebSocketServer = WebSocket.Server
 const clients = new Clients()
-const wss = new WebSocketServer({ server });
+const wss = new WebSocketServer({ server_https });
 
 
 wss.on('connection', function connection(client) {
@@ -875,26 +887,11 @@ function setupNextRound() {
 
                 //checking all hands to see if user gets the stacked_deck achievement
                 checkIfGoodHand(displayed_hand_strengths)
-                setTimeout(calculateWinnings, 1000)
+                setTimeout(calculateWinnings, 2000)
                 setTimeout(setupFirstRound, 4000)
             }, 250)
     }
 }
-
-function arrayIsEqual(arr1, arr2) {
-    if (arr1.length !== arr2.length) {
-        return false;
-    }
-
-    for (let i = 0; i < arr1.length; i++) {
-        if (arr1[i] !== arr2[i]) {
-            return false;
-        }
-    }
-
-    return true;
-}
-
 
 //----direct database calls, use async function to call these----//
 //checks if the users table exists
@@ -963,7 +960,7 @@ function initTables() {
             const users = [
                 {
                     username: 'ylee',
-                    password: 'dogwater',
+                    password: 'dogwarrior',
                     is_admin: 1,
                 },
                 {
@@ -1014,14 +1011,9 @@ async function checkIfUserExists(username) {
 
 
 
-
-
-
-//deleteUsersTable()
-//deleteAchievementsTable()
 //deleteAllUsers()
-checkTable()
-setTimeout(preloadAchievementsMap, 2000)
+setTimeout(checkTable, 2000)
+setTimeout(preloadAchievementsMap, 4000)
 
 
 
@@ -1030,14 +1022,8 @@ setTimeout(preloadAchievementsMap, 2000)
 
 
 
-server.listen(PORT, () => {
+server_https.listen(PORT, () => {
     console.log(`Server listening on ${PORT}`);
-});
-
-app.get("/", )
-
-app.get("/api", (req, res) => {
-    res.json({message: "Hello from server!"});
 });
 
 app.post("/login", cors(), (req, res) => {
@@ -1310,21 +1296,6 @@ app.post("/ingame_token", cors(), (req, res) => {
         .catch((err) => {
             console.log(err)
             res.status(200).json({auth: 0, message: "Error: User does not exist to retrieve ingame token."})
-        })
-})
-
-app.post("/player_index", cors(), (req, res) => {
-    //login-token
-    const user_request = {token: req.body.token}
-
-    userRepo.getByLoginToken(user_request.token)
-        .then((retrievedUser) => {
-            const user_index = playing_users.indexOf(retrievedUser.username)
-            res.status(201).json({index: user_index})
-        })
-        .catch((err) => {
-            console.log(err)
-            res.status(200).json({index: -1})
         })
 })
 
@@ -1816,11 +1787,6 @@ app.get("/ready_players", (req, res) => {
         res.status(201).json({ready_players: ready_player_fraction})
     }
 })
-
-app.get("/users", (req, res) => {
-    res.json({message: "Hey there!"})
-    getAllUsers();
-});
 
 app.get("/board_state", (req, res) => {
     const first = (current_board.length > 0) ? current_board[0] : "Empty"

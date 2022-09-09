@@ -10,7 +10,7 @@ function StartGame() {
 
     //adds or removes player from the list of players that want to start the game, 1 for addition, 0 for removal
     function toggleGame(toggled_value) {
-        fetch('https://54.91.205.171:3080/toggle_game', {method: 'POST', body: JSON.stringify({token: token_parsed?.token, toggle: toggled_value, begin_game: 1}), headers: player_headers})
+        fetch('https://yunyeollee-server.com:3080/toggle_game', {method: 'POST', body: JSON.stringify({token: token_parsed?.token, toggle: toggled_value, begin_game: 1}), headers: player_headers})
         .then(res => res.json())
         .then((retrievedMessage) => {
             console.log(retrievedMessage.message)

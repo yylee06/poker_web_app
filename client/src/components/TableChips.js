@@ -12,7 +12,7 @@ function TableChips({ socket }) {
     
     const callbackTableChipsState = useCallback(() => {
         function getTableChipsState() {
-          fetch('https://54.91.205.171:3080/table_chips')
+          fetch('https://yunyeollee-server.com:3080/table_chips')
             .then(res => res.json())
             .then((retrievedMessage) => {
                 setTableChips(retrievedMessage.chips)

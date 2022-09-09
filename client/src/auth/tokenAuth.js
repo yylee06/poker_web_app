@@ -9,7 +9,7 @@ const tokenAuth = ((socket, loginToken, setLoginToken, gameToken, setGameToken, 
 
     //authenticates the login token
     function authLoginToken() {
-        fetch('https://54.91.205.171:3080/auth_login_token', {method: 'POST', body: JSON.stringify({token: login_token_parsed?.token}), headers: token_headers})
+        fetch('https://yunyeollee-server.com:3080/auth_login_token', {method: 'POST', body: JSON.stringify({token: login_token_parsed?.token}), headers: token_headers})
         .then(res => res.json())
         .then((retrievedMessage) => {
             if (retrievedMessage.auth === 0) {
@@ -28,7 +28,7 @@ const tokenAuth = ((socket, loginToken, setLoginToken, gameToken, setGameToken, 
 
     //authenticates the game token, also removes token if login token does not exist
     function authGameToken() {
-        fetch('https://54.91.205.171:3080/auth_game_token', {method: 'POST', body: JSON.stringify({token: game_token_parsed?.token}), headers: token_headers})
+        fetch('https://yunyeollee-server.com:3080/auth_game_token', {method: 'POST', body: JSON.stringify({token: game_token_parsed?.token}), headers: token_headers})
         .then(res => res.json())
         .then((retrievedMessage) => {
             if (retrievedMessage.auth === 0 || !loginToken) {
@@ -41,7 +41,7 @@ const tokenAuth = ((socket, loginToken, setLoginToken, gameToken, setGameToken, 
 
     //authenticates the ingame token, also removes token if login token does not exist
     function authIngameToken() {
-        fetch('https://54.91.205.171:3080/auth_ingame_token', {method: 'POST', body: JSON.stringify({token: ingame_token_parsed?.token}), headers: token_headers})
+        fetch('https://yunyeollee-server.com:3080/auth_ingame_token', {method: 'POST', body: JSON.stringify({token: ingame_token_parsed?.token}), headers: token_headers})
         .then(res => res.json())
         .then((retrievedMessage) => {
             if (retrievedMessage.auth === 0 || !loginToken) {
@@ -57,7 +57,7 @@ const tokenAuth = ((socket, loginToken, setLoginToken, gameToken, setGameToken, 
 
     //authenticates the admin token, also removes token if login token does not exist
     function authAdminToken() {
-        fetch('https://54.91.205.171:3080/auth_admin_token', {method: 'POST', body: JSON.stringify({token: login_token_parsed?.token}), headers: token_headers})
+        fetch('https://yunyeollee-server.com:3080/auth_admin_token', {method: 'POST', body: JSON.stringify({token: login_token_parsed?.token}), headers: token_headers})
         .then(res => res.json())
         .then((retrievedMessage) => {
             if (retrievedMessage.auth === 0 || !loginToken) {
